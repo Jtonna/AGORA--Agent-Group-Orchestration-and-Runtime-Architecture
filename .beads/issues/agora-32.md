@@ -1,7 +1,7 @@
 # Create README Documentation
 
 **Type:** task
-**Status:** open
+**Status:** closed
 **Epic:** agora-28 (Phase 4 - QA & Documentation)
 **Priority:** medium
 **Assignee:** Employee

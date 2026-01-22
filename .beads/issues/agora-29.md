@@ -1,7 +1,7 @@
 # Create Bruno Collection Structure
 
 **Type:** task
-**Status:** open
+**Status:** closed
 **Epic:** agora-28 (Phase 4 - QA & Documentation)
 **Priority:** high
 **Assignee:** Employee

@@ -1,7 +1,7 @@
 # Bruno Requests for Mail Endpoints
 
 **Type:** task
-**Status:** open
+**Status:** closed
 **Epic:** agora-28 (Phase 4 - QA & Documentation)
 **Priority:** high
 **Assignee:** Employee
