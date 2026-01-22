@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ralph Wiggum's Loop - AI Agent Development Technique Research Report</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary-color: #10b981;
+            --accent-color: #f59e0b;
+            --background-color: #0f172a;
+            --surface-color: #1e293b;
+            --surface-light: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --code-bg: #0d1117;
+            --border-color: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            padding: 4rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        header .subtitle {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.9);
+            position: relative;
+            z-index: 1;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--secondary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        nav {
+            background: var(--surface-color);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        nav a:hover {
+            color: var(--text-primary);
+            background: var(--surface-light);
+        }
+
+        main {
+            padding: 3rem 0;
+        }
+
+        section {
+            background: var(--surface-color);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            font-size: 1.875rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        h2::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 1.5rem;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            color: var(--secondary-color);
+            margin: 1.5rem 0 1rem;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
+            border-left: 4px solid var(--primary-color);
+            padding: 1.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1.5rem 0;
+        }
+
+        .highlight-box.warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(239, 68, 68, 0.1) 100%);
+            border-left-color: var(--accent-color);
+        }
+
+        .highlight-box p {
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        blockquote {
+            background: var(--surface-light);
+            border-left: 4px solid var(--accent-color);
+            padding: 1.25rem 1.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1.5rem 0;
+            font-style: italic;
+        }
+
+        blockquote cite {
+            display: block;
+            margin-top: 0.75rem;
+            font-style: normal;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        pre {
+            background: var(--code-bg);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        pre code {
+            color: #e2e8f0;
+        }
+
+        :not(pre) > code {
+            background: var(--surface-light);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            color: var(--secondary-color);
+        }
+
+        .code-comment {
+            color: #6b7280;
+        }
+
+        .code-keyword {
+            color: #c084fc;
+        }
+
+        .code-string {
+            color: #34d399;
+        }
+
+        .code-function {
+            color: #60a5fa;
+        }
+
+        ul, ol {
+            margin: 1rem 0 1rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--surface-light);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h4 {
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            font-size: 1.125rem;
+        }
+
+        .card p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: var(--primary-color);
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--surface-light);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        tr:hover td {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            border: 2px solid var(--background-color);
+        }
+
+        .timeline-date {
+            color: var(--secondary-color);
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .tag {
+            display: inline-block;
+            background: var(--surface-light);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            margin: 0.25rem;
+        }
+
+        .tag.primary {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary-color);
+        }
+
+        .tag.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--secondary-color);
+        }
+
+        .diagram {
+            background: var(--code-bg);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+            margin: 1.5rem 0;
+            font-family: monospace;
+            border: 1px solid var(--border-color);
+        }
+
+        .diagram-content {
+            display: inline-block;
+            text-align: left;
+            color: var(--text-secondary);
+        }
+
+        .diagram-arrow {
+            color: var(--primary-color);
+        }
+
+        .diagram-box {
+            display: inline-block;
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            margin: 0.25rem;
+            background: var(--surface-color);
+        }
+
+        footer {
+            background: var(--surface-color);
+            padding: 3rem 0;
+            margin-top: 3rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        footer h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        footer ul {
+            list-style: none;
+            margin: 0;
+        }
+
+        footer li {
+            margin-bottom: 0.75rem;
+        }
+
+        footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        footer a:hover {
+            color: var(--primary-color);
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            section {
+                padding: 1.5rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            nav ul {
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding: 0 1rem;
+            }
+
+            .stats {
+                gap: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Ralph Wiggum's Loop</h1>
+            <p class="subtitle">The AI Agent Development Methodology That's Revolutionizing Autonomous Coding</p>
+            <span class="badge">Research Report - January 2026</span>
+        </div>
+    </header>
+
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#methodology">Methodology</a></li>
+                <li><a href="#implementation">Implementation</a></li>
+                <li><a href="#best-practices">Best Practices</a></li>
+                <li><a href="#popularity">Popularity</a></li>
+                <li><a href="#timeline">Timeline</a></li>
+                <li><a href="#sources">Sources</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section id="overview">
+            <h2>What is Ralph Wiggum's Loop?</h2>
+
+            <p>The <strong>Ralph Wiggum Technique</strong> (also known as "Ralph's Loop" or simply "Ralph") is an AI development methodology built around continuous AI agent loops. Created by <strong>Geoffrey Huntley</strong>, this technique went viral in late 2025 and has since become one of the most influential patterns in autonomous AI-assisted coding.</p>
+
+            <div class="highlight-box">
+                <p><strong>In essence:</strong> Ralph is a Bash loop. A simple <code>while true</code> that repeatedly feeds an AI agent the same prompt until the task is complete. The agent sees its previous work through git history and modified files, enabling self-correction and iterative improvement.</p>
+            </div>
+
+            <blockquote>
+                "Ralph is a Bash loop."
+                <cite>- Geoffrey Huntley, Creator of the Ralph Wiggum Technique</cite>
+            </blockquote>
+
+            <h3>Why "Ralph Wiggum"?</h3>
+            <p>Named after the lovably persistent character from <em>The Simpsons</em>, the technique embodies Ralph Wiggum's philosophy of determined persistence despite setbacks. Tech communities picked the name because of Ralph's nature to keep trying, no matter what - which perfectly describes how this AI loop operates.</p>
+
+            <div class="grid">
+                <div class="card">
+                    <div class="icon">&#128260;</div>
+                    <h4>Iterative by Design</h4>
+                    <p>Embraces iterative improvement over single-shot perfection. Each iteration builds on the previous work.</p>
+                </div>
+                <div class="card">
+                    <div class="icon">&#128736;</div>
+                    <h4>Autonomous Operation</h4>
+                    <p>Enables AI agents to work for hours without human intervention, implementing entire features overnight.</p>
+                </div>
+                <div class="card">
+                    <div class="icon">&#128202;</div>
+                    <h4>Self-Correcting</h4>
+                    <p>Failures become predictable and recoverable. The loop catches errors and tries again automatically.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-it-works">
+            <h2>How It Works</h2>
+
+            <p>At its core, the Ralph Wiggum technique is elegantly simple: keep feeding an AI agent a task until the job is done. Where traditional agentic workflows stop when an LLM finishes calling tools, Ralph keeps going - verifying completion, providing feedback, and running another iteration until the task actually succeeds.</p>
+
+            <h3>The Core Loop</h3>
+            <div class="diagram">
+                <div class="diagram-content">
+<pre style="margin:0;background:transparent;border:none;padding:0;">
+    +-------------------+
+    |   Start Loop      |
+    +--------+----------+
+             |
+             v
+    +--------+----------+
+    |  Feed Prompt to   |
+    |     AI Agent      |
+    +--------+----------+
+             |
+             v
+    +--------+----------+
+    |   Agent Works     |
+    | (implements code) |
+    +--------+----------+
+             |
+             v
+    +--------+----------+
+    |  Run Backpressure |
+    | (tests, lints,    |
+    |  type checks)     |
+    +--------+----------+
+             |
+       +-----+-----+
+       |           |
+       v           v
+   [PASS]       [FAIL]
+       |           |
+       v           v
+    +--+--+    +--+---+
+    |Check|    |Commit|
+    |Done?|    |  &   |
+    +--+--+    |Retry |
+       |       +--+---+
+   +---+---+      |
+   |       |      |
+   v       v      |
+ [YES]   [NO]     |
+   |       |      |
+   v       +------+
++--+---+
+| EXIT |
++------+
+</pre>
+                </div>
+            </div>
+
+            <h3>Key Mechanism: Stateless Resampling</h3>
+            <p>Standard agent loops suffer from <strong>context accumulation</strong> - every failed attempt stays in the conversation history. After a few iterations, the model must process a long history of noise before focusing on the task. This leads to what's called "context rot."</p>
+
+            <p>Ralph Loop solves this by starting each iteration with <strong>fresh context</strong>. The prompt never changes, but the world does - files are modified, commits are made, and the agent reads these changes to understand progress.</p>
+
+            <div class="highlight-box">
+                <p><strong>The Core Insight:</strong> Git history becomes the AI's memory. Each commit is a checkpoint. The loop becomes a learning mechanism. This is why Ralph works for long-running tasks - the AI doesn't lose context because it builds on the filesystem state.</p>
+            </div>
+
+            <h3>Three Persistence Mechanisms</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mechanism</th>
+                        <th>Purpose</th>
+                        <th>How It Works</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Git History</strong></td>
+                        <td>Code state persistence</td>
+                        <td>Each iteration commits changes, providing a checkpoint the next iteration can read</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Progress File</strong></td>
+                        <td>Learning persistence</td>
+                        <td>A <code>progress.txt</code> file captures insights and learnings across iterations</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Task Tracker</strong></td>
+                        <td>Completion status</td>
+                        <td>Files like <code>prd.json</code> or <code>IMPLEMENTATION_PLAN.md</code> track what's done</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="methodology">
+            <h2>Methodology: Three Phases, Two Prompts, One Loop</h2>
+
+            <p>The Ralph Wiggum technique operates as a structured funnel with distinct phases:</p>
+
+            <h3>Phase 1: Define Requirements</h3>
+            <p>Through LLM conversation, break project ideas into Jobs to Be Done (JTBD), then decompose these into topics of concern. Each topic generates a specification document.</p>
+
+            <h3>Phase 2-3: Run Ralph Loop</h3>
+            <p>Two operational modes share the same execution mechanism but use different prompts:</p>
+
+            <div class="grid">
+                <div class="card">
+                    <h4>Planning Mode</h4>
+                    <p>Uses <code>PROMPT_plan.md</code> to perform gap analysis between specifications and existing code. Outputs a prioritized TODO list. <strong>No implementation, no commits.</strong></p>
+                    <div style="margin-top: 1rem;">
+                        <span class="tag primary">Gap Analysis</span>
+                        <span class="tag">Read-Only</span>
+                        <span class="tag">Prioritization</span>
+                    </div>
+                </div>
+                <div class="card">
+                    <h4>Building Mode</h4>
+                    <p>Uses <code>PROMPT_build.md</code>. Assumes a plan exists, picks tasks, implements them, runs tests, and commits. This is where the actual coding happens.</p>
+                    <div style="margin-top: 1rem;">
+                        <span class="tag success">Implementation</span>
+                        <span class="tag">Testing</span>
+                        <span class="tag">Commits</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Two Modes of Operation</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mode</th>
+                        <th>HITL (Human-in-the-Loop)</th>
+                        <th>AFK (Away From Keyboard)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Description</strong></td>
+                        <td>Resembles pair programming. You and the AI work together, reviewing code as it's created.</td>
+                        <td>Long-running, autonomous, unsupervised coding. Set it running and come back when done.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Iterations</strong></td>
+                        <td>Single iterations with review between each</td>
+                        <td>Multiple iterations (10-50+) running continuously</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Best For</strong></td>
+                        <td>Learning Ralph, architectural decisions, risky integrations</td>
+                        <td>Mechanical refactors, well-defined tasks, overnight runs</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Supervision</strong></td>
+                        <td>Active steering and adjustment</td>
+                        <td>Minimal - notifications when finished</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box warning">
+                <p><strong>Important:</strong> Use HITL Ralph for early architectural decisions - the code from these tasks stays forever, and shortcuts cascade through the project. Save AFK Ralph for when the foundation is solid.</p>
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>Implementation</h2>
+
+            <h3>The Simplest Form</h3>
+            <p>At its most basic, Ralph is just this:</p>
+
+<pre><code><span class="code-comment"># The original Ralph loop - elegantly simple</span>
+<span class="code-keyword">while</span> :; <span class="code-keyword">do</span>
+    cat PROMPT.md | claude
+<span class="code-keyword">done</span></code></pre>
+
+            <h3>Enhanced Loop Script</h3>
+            <p>A more production-ready implementation with mode selection and iteration limits:</p>
+
+<pre><code><span class="code-comment">#!/bin/bash</span>
+<span class="code-comment"># loop.sh - Enhanced Ralph implementation</span>
+
+MODE=${1:-build}
+MAX_ITERATIONS=${2:-0}
+ITERATION=0
+
+<span class="code-keyword">while</span> :; <span class="code-keyword">do</span>
+    <span class="code-comment"># Check iteration limit</span>
+    <span class="code-keyword">if</span> [[ $MAX_ITERATIONS -gt 0 && $ITERATION -ge $MAX_ITERATIONS ]]; <span class="code-keyword">then</span>
+        <span class="code-function">echo</span> <span class="code-string">"Max iterations reached ($MAX_ITERATIONS)"</span>
+        <span class="code-keyword">exit</span> 0
+    <span class="code-keyword">fi</span>
+
+    ((ITERATION++))
+    <span class="code-function">echo</span> <span class="code-string">"=== Iteration $ITERATION ==="</span>
+
+    <span class="code-comment"># Select prompt based on mode</span>
+    <span class="code-keyword">if</span> [[ <span class="code-string">"$MODE"</span> == <span class="code-string">"plan"</span> ]]; <span class="code-keyword">then</span>
+        PROMPT_FILE=<span class="code-string">"PROMPT_plan.md"</span>
+    <span class="code-keyword">else</span>
+        PROMPT_FILE=<span class="code-string">"PROMPT_build.md"</span>
+    <span class="code-keyword">fi</span>
+
+    <span class="code-comment"># Run Claude with the prompt</span>
+    cat <span class="code-string">"$PROMPT_FILE"</span> | claude \
+        -p \
+        --dangerously-skip-permissions \
+        --output-format=stream-json \
+        --model opus
+
+    <span class="code-comment"># Check for completion signal</span>
+    <span class="code-keyword">if</span> grep -q <span class="code-string">"&lt;promise&gt;COMPLETE&lt;/promise&gt;"</span> output.log; <span class="code-keyword">then</span>
+        <span class="code-function">echo</span> <span class="code-string">"Task completed successfully!"</span>
+        <span class="code-keyword">exit</span> 0
+    <span class="code-keyword">fi</span>
+<span class="code-keyword">done</span></code></pre>
+
+            <h3>Usage Examples</h3>
+<pre><code><span class="code-comment"># Build mode, unlimited iterations</span>
+./loop.sh
+
+<span class="code-comment"># Build mode, max 20 iterations</span>
+./loop.sh build 20
+
+<span class="code-comment"># Plan mode, max 5 iterations</span>
+./loop.sh plan 5
+
+<span class="code-comment"># Using the official Claude Code plugin</span>
+/plugin install ralph-wiggum@claude-plugins-official
+/ralph-loop <span class="code-string">"Add JSDoc comments to all exported functions"</span> --max-iterations 10
+
+<span class="code-comment"># Cancel an active loop</span>
+/cancel-ralph</code></pre>
+
+            <h3>Required File Structure</h3>
+<pre><code>project-root/
+  ├── loop.sh                  <span class="code-comment"># Orchestration script</span>
+  ├── PROMPT_build.md          <span class="code-comment"># Building instructions</span>
+  ├── PROMPT_plan.md           <span class="code-comment"># Planning instructions</span>
+  ├── AGENTS.md                <span class="code-comment"># Operational reference &amp; commands</span>
+  ├── IMPLEMENTATION_PLAN.md   <span class="code-comment"># Persistent task list</span>
+  ├── specs/                   <span class="code-comment"># Requirements documents</span>
+  └── src/                     <span class="code-comment"># Application code</span></code></pre>
+
+            <h3>Key Flags Explained</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Flag</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>-p</code></td>
+                        <td>Headless/print mode - no interactive prompts</td>
+                    </tr>
+                    <tr>
+                        <td><code>--dangerously-skip-permissions</code></td>
+                        <td>Auto-approve all tool calls (required for automation)</td>
+                    </tr>
+                    <tr>
+                        <td><code>--output-format=stream-json</code></td>
+                        <td>Structured logging for parsing</td>
+                    </tr>
+                    <tr>
+                        <td><code>--model opus</code></td>
+                        <td>Use the most capable reasoning model</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="best-practices">
+            <h2>Best Practices & Key Concepts</h2>
+
+            <h3>The Philosophy: Sit on the Loop, Not In It</h3>
+            <p>Your job is to <strong>engineer the setup and environment</strong> that allows Ralph to succeed. Ralph should be doing all of the work, including deciding which planned work to implement next and how to implement it.</p>
+
+            <div class="grid">
+                <div class="card">
+                    <h4>Backpressure Over Prescription</h4>
+                    <p>Don't prescribe how to implement things. Instead, create gates that reject bad work: tests, typechecks, lints, and builds that will fail on invalid output.</p>
+                </div>
+                <div class="card">
+                    <h4>Observe and Tune</h4>
+                    <p>The prompts you start with won't be the prompts you end with. Watch for failure patterns and add "signs" to help Ralph avoid them next time.</p>
+                </div>
+                <div class="card">
+                    <h4>Keep Tasks Small</h4>
+                    <p>Stories must fit within one context window. Oversized tasks cause incomplete implementations. Target specific changes, not entire features.</p>
+                </div>
+                <div class="card">
+                    <h4>Keep CI Green</h4>
+                    <p>Each iteration must pass tests or you're in trouble. Broken code compounds across iterations and derails the entire loop.</p>
+                </div>
+            </div>
+
+            <h3>Backpressure Mechanisms</h3>
+            <p>Backpressure is the key steering mechanism. Create signals that reject invalid work:</p>
+
+            <ul>
+                <li><strong>Type checking</strong> - TypeScript, mypy, or similar static analysis</li>
+                <li><strong>Linting</strong> - ESLint, Prettier, or code style enforcement</li>
+                <li><strong>Unit tests</strong> - Fast, deterministic validation</li>
+                <li><strong>Integration tests</strong> - End-to-end verification</li>
+                <li><strong>Build process</strong> - Compilation must succeed</li>
+                <li><strong>LLM-as-judge</strong> - For subjective criteria that need human-like judgment</li>
+            </ul>
+
+            <div class="highlight-box">
+                <p><strong>Critical:</strong> Make sure the validation commands in <code>AGENTS.md</code> actually run and fail when they should. Claude only knows tests failed if the command returns a non-zero exit code.</p>
+            </div>
+
+            <h3>Context Management</h3>
+            <p>The "dumb zone" hits around <strong>40% context utilization</strong>. Past that, reasoning degrades. Ralph's one-task-per-iteration structure sidesteps this by starting each iteration fresh.</p>
+
+            <h3>Critical Language Patterns</h3>
+            <p>Geoff Huntley discovered specific phrasing that improves effectiveness:</p>
+            <ul>
+                <li>Use <strong>"study"</strong> rather than "read" or "examine"</li>
+                <li>Include <strong>"don't assume not implemented"</strong> to prevent redundant work</li>
+                <li>Specify subagent parallelization limits</li>
+                <li>Restrict build/test validation to single sequential subagent for backpressure control</li>
+                <li>Emphasize <strong>"capture the why"</strong> in documentation</li>
+            </ul>
+
+            <h3>Safety Considerations</h3>
+            <div class="highlight-box warning">
+                <p><strong>Security Warning:</strong> The <code>--dangerously-skip-permissions</code> flag grants the AI full control over the terminal. Always run Ralph sessions in sandboxed environments (disposable cloud VMs, Docker containers, or services like Fly Sprites/E2B) to prevent accidental damage.</p>
+            </div>
+
+            <ul>
+                <li>Always cap iterations for AFK mode (5-10 for small tasks, 30-50 for larger ones)</li>
+                <li>Use isolated environments with minimal necessary access</li>
+                <li>Restrict network connectivity where feasible</li>
+                <li>Never include credentials beyond task requirements</li>
+            </ul>
+        </section>
+
+        <section id="popularity">
+            <h2>Popularity & Adoption</h2>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">10+</div>
+                    <div class="stat-label">Major Implementations</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">Official</div>
+                    <div class="stat-label">Anthropic Plugin</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">Viral</div>
+                    <div class="stat-label">Late 2025 Adoption</div>
+                </div>
+            </div>
+
+            <h3>Key Implementations</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Repository</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>ghuntley/how-to-ralph-wiggum</code></td>
+                        <td>The original reference implementation by Geoffrey Huntley</td>
+                        <td><span class="tag success">Official</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>anthropics/claude-code/plugins/ralph-wiggum</code></td>
+                        <td>Official Anthropic plugin for Claude Code</td>
+                        <td><span class="tag success">Official</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>snarktank/ralph</code></td>
+                        <td>Ryan Carson's bash implementation with PRD tracking</td>
+                        <td><span class="tag primary">Popular</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>vercel-labs/ralph-loop-agent</code></td>
+                        <td>Vercel's implementation for the AI SDK</td>
+                        <td><span class="tag primary">Popular</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>mikeyobrien/ralph-orchestrator</code></td>
+                        <td>Improved orchestration implementation</td>
+                        <td><span class="tag">Community</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>frankbria/ralph-claude-code</code></td>
+                        <td>Autonomous loop with intelligent exit detection</td>
+                        <td><span class="tag">Community</span></td>
+                    </tr>
+                    <tr>
+                        <td><code>snwfdhmp/awesome-ralph</code></td>
+                        <td>Curated list of Ralph resources</td>
+                        <td><span class="tag">Resource</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Media Coverage & Resources</h3>
+            <ul>
+                <li><strong>VentureBeat:</strong> "How Ralph Wiggum went from 'The Simpsons' to the biggest name in AI right now"</li>
+                <li><strong>Dev Interrupted Podcast:</strong> "Inventing the Ralph Wiggum Loop" - Creator Interview</li>
+                <li><strong>"AI That Works" Podcast:</strong> 75-minute deep-dive on context windows and control loops</li>
+                <li><strong>Multiple DEV.to articles</strong> explaining the technique</li>
+                <li><strong>Alibaba Cloud Community:</strong> "From ReAct to Ralph Loop: A Continuous Iteration Paradigm"</li>
+            </ul>
+
+            <h3>Real-World Results</h3>
+            <div class="grid">
+                <div class="card">
+                    <h4>Cursed Lang</h4>
+                    <p>A programming language built entirely by Ralph over 3 months, progressing through C, Rust, and Zig implementations with a self-hosting compiler.</p>
+                </div>
+                <div class="card">
+                    <h4>Hackathon Success</h4>
+                    <p>Multiple repositories completed for under $300 in API costs - shipped serious work with minimal human intervention.</p>
+                </div>
+                <div class="card">
+                    <h4>Overnight Refactors</h4>
+                    <p>6+ hour autonomous refactoring sessions completing significant codebase transformations while developers sleep.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="timeline">
+            <h2>Timeline & History</h2>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">June 2025</div>
+                    <p>Geoffrey Huntley first demonstrates the Ralph Wiggum Technique at a Twitter GC meetup with 15 agentic coding enthusiasts. Shows "bizarre emergent behavior" like autonomous implementation of post-quantum cryptography when loops run too long.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">July 2025</div>
+                    <p>Huntley publishes the official blog post introducing Ralph with its foundational bash implementation: <code>while :; do cat PROMPT.md | npx --yes @sourcegraph/amp ; done</code></p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">August 2025</div>
+                    <p>Ralph gains attention for context window engineering principles. The "repomirror" project demonstrates Ralph shipping 6 repositories overnight.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">September 2025</div>
+                    <p>Geoff launches <strong>Cursed Lang</strong> - a programming language built entirely by Ralph, demonstrating the technique's capability for complex, long-running projects.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">October 2025</div>
+                    <p>Lightning talk at Claude Code Anonymous (SF). 75-minute "AI That Works" podcast deep-dive exploring context windows and control loops.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">December 2025</div>
+                    <p><strong>Technique goes viral.</strong> Anthropic releases official Ralph plugin for Claude Code. YouTube coverage proliferates across the developer community.</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date">January 2026</div>
+                    <p>"Ralph Wiggum Showdown" livestream demonstrating original bash versus plugin implementations. Technique now widely adopted across the AI coding community.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="sources">
+            <h2>Sources & References</h2>
+
+            <h3>Official Resources</h3>
+            <ul>
+                <li><a href="https://github.com/ghuntley/how-to-ralph-wiggum" target="_blank">ghuntley/how-to-ralph-wiggum</a> - Geoffrey Huntley's official guide</li>
+                <li><a href="https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum" target="_blank">Anthropic Claude Code Ralph Plugin</a> - Official plugin</li>
+                <li><a href="https://ghuntley.com/ralph/" target="_blank">ghuntley.com/ralph</a> - Creator's homepage</li>
+            </ul>
+
+            <h3>Implementations</h3>
+            <ul>
+                <li><a href="https://github.com/snarktank/ralph" target="_blank">snarktank/ralph</a> - Ryan Carson's bash implementation</li>
+                <li><a href="https://github.com/vercel-labs/ralph-loop-agent" target="_blank">vercel-labs/ralph-loop-agent</a> - Vercel's AI SDK implementation</li>
+                <li><a href="https://github.com/mikeyobrien/ralph-orchestrator" target="_blank">mikeyobrien/ralph-orchestrator</a> - Improved orchestration</li>
+                <li><a href="https://github.com/frankbria/ralph-claude-code" target="_blank">frankbria/ralph-claude-code</a> - Autonomous loop with exit detection</li>
+                <li><a href="https://github.com/snwfdhmp/awesome-ralph" target="_blank">snwfdhmp/awesome-ralph</a> - Curated resource list</li>
+            </ul>
+
+            <h3>Articles & Tutorials</h3>
+            <ul>
+                <li><a href="https://awesomeclaude.ai/ralph-wiggum" target="_blank">Awesome Claude - Ralph Wiggum AI Loop Technique</a></li>
+                <li><a href="https://dev.to/sivarampg/the-ralph-wiggum-approach-running-ai-coding-agents-for-hours-not-minutes-57c1" target="_blank">DEV.to - The Ralph Wiggum Approach</a></li>
+                <li><a href="https://www.humanlayer.dev/blog/brief-history-of-ralph" target="_blank">HumanLayer - A Brief History of Ralph</a></li>
+                <li><a href="https://paddo.dev/blog/ralph-wiggum-playbook/" target="_blank">The Ralph Wiggum Playbook</a></li>
+                <li><a href="https://www.ishir.com/blog/312751/ralph-wiggum-and-ai-coding-loops-from-springfield-to-real-world-software-automation.htm" target="_blank">ISHIR - From Springfield to Real-World Automation</a></li>
+                <li><a href="https://blog.devgenius.io/ralph-wiggum-explained-the-claude-code-loop-that-keeps-going-3250dcc30809" target="_blank">Dev Genius - Ralph Wiggum Explained</a></li>
+                <li><a href="https://www.alibabacloud.com/blog/from-react-to-ralph-loop-a-continuous-iteration-paradigm-for-ai-agents_602799" target="_blank">Alibaba Cloud - From ReAct to Ralph Loop</a></li>
+            </ul>
+
+            <h3>Media Coverage</h3>
+            <ul>
+                <li><a href="https://venturebeat.com/technology/how-ralph-wiggum-went-from-the-simpsons-to-the-biggest-name-in-ai-right-now" target="_blank">VentureBeat - How Ralph Wiggum Became the Biggest Name in AI</a></li>
+                <li><a href="https://devinterrupted.substack.com/p/inventing-the-ralph-wiggum-loop-creator" target="_blank">Dev Interrupted - Creator Interview</a></li>
+                <li><a href="https://block.github.io/goose/docs/tutorials/ralph-loop/" target="_blank">Goose Documentation - Ralph Loop Tutorial</a></li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="grid">
+                <div>
+                    <h3>About This Report</h3>
+                    <p>This research report was compiled in January 2026 to provide a comprehensive overview of the Ralph Wiggum Loop technique for AI-assisted autonomous coding.</p>
+                </div>
+                <div>
+                    <h3>Key Takeaways</h3>
+                    <ul>
+                        <li>Ralph is fundamentally a simple bash while loop</li>
+                        <li>Success comes from backpressure, not prescription</li>
+                        <li>Fresh context per iteration prevents context rot</li>
+                        <li>Git history serves as the AI's persistent memory</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-note">
+                <p>Research compiled for AGORA - Agent Group Orchestration and Runtime Architecture</p>
+                <p>Report generated: January 2026</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
