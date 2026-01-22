@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tool name="the-corporations-email" version="1">
+
+  <description>
+    Internal email system for agent communication.
+    Used to receive tasks, ask questions, and report status.
+  </description>
+
+  <base-url>http://localhost:60061</base-url>
+
+  <!-- ===== ENDPOINTS ===== -->
+
+  <endpoints>
+
+    <endpoint name="check-inbox">
+      <windows>
+        <tool>scripts/check-mail.ps1</tool>
+        <recommended>.\scripts\check-mail.ps1 {your_name} -UnreadOnly -Poll</recommended>
+        <options>
+          <option name="-UnreadOnly">Only show unread emails</option>
+          <option name="-Poll">Block until new mail arrives</option>
+          <option name="-Interval N">Seconds between poll checks (default: 15)</option>
+          <option name="-MaxRuntime N">Minutes before timeout (default: 7)</option>
+        </options>
+      </windows>
+      <linux-macos>
+        <tool>scripts/check-mail.sh</tool>
+        <requires>jq</requires>
+        <recommended>./scripts/check-mail.sh {your_name} --unread-only --poll</recommended>
+        <options>
+          <option name="--unread-only">Only show unread emails</option>
+          <option name="--poll">Block until new mail arrives</option>
+          <option name="--interval N">Seconds between poll checks (default: 15)</option>
+          <option name="--max-runtime N">Minutes before timeout (default: 7)</option>
+        </options>
+      </linux-macos>
+      <output>ID: {uuid} | FROM: {sender} | SUBJECT: {subject} | UNREAD</output>
+    </endpoint>
+
+    <endpoint name="read-email">
+      <method>GET</method>
+      <path>/mail/{mail_id}?viewer={your_name}</path>
+      <example>GET /mail/550e8400-e29b-41d4-a716-446655440000?viewer=employee-agora-5</example>
+      <returns>Full email content plus thread</returns>
+      <note>Marks email as read automatically</note>
+    </endpoint>
+
+    <endpoint name="send-email">
+      <method>POST</method>
+      <path>/mail</path>
+      <headers>Content-Type: application/json; charset=utf-8</headers>
+      <body>{
+  "to": ["recipient-name"],
+  "from": "your-name",
+  "subject": "PREFIX: Subject here",
+  "content": "Message body",
+  "isResponseTo": "uuid-if-replying-or-null"
+}</body>
+      <returns>{ "id": "new-uuid", "message": "Email sent successfully" }</returns>
+      <note>"to" supports multiple recipients - use for collaboration requests or to CC your manager</note>
+    </endpoint>
+
+    <endpoint name="delete-email">
+      <method>DELETE</method>
+      <path>/mail/{mail_id}?viewer={your_name}</path>
+      <example>DELETE /mail/550e8400-e29b-41d4-a716-446655440000?viewer=employee-agora-5</example>
+      <returns>{ "message": "Email deleted" }</returns>
+      <note>Soft delete - only hides from your inbox</note>
+    </endpoint>
+
+  </endpoints>
+
+  <!-- ===== SUBJECT PREFIXES ===== -->
+
+  <subject-prefixes>
+    <!-- Task Assignment -->
+    <prefix code="GETTING STARTED">Task assignment to begin work</prefix>
+    <prefix code="ACKNOWLEDGED">Confirms receipt and understanding</prefix>
+
+    <!-- Requesting Help (all blocking - sender waits for response) -->
+    <prefix code="QUESTION">Pre-work question, need answer before starting</prefix>
+    <prefix code="CLARIFICATION">During-work question, need guidance to proceed</prefix>
+    <prefix code="BLOCKED">Stuck on something, cannot continue</prefix>
+
+    <!-- Peer Coordination -->
+    <prefix code="COLLABORATION REQUEST">Request to coordinate with another agent on shared work</prefix>
+
+    <!-- Status Updates -->
+    <prefix code="PROGRESS">Status update after completing a plan phase</prefix>
+    <prefix code="IMPORTANT">Urgent course correction from supervisor</prefix>
+
+    <!-- Completion Loop -->
+    <prefix code="COMPLETE">Work finished, ready for review</prefix>
+    <prefix code="APPROVED">Work accepted</prefix>
+    <prefix code="REVISION">Changes requested, needs rework</prefix>
+  </subject-prefixes>
+
+  <!-- ===== ERROR HANDLING ===== -->
+
+  <error-handling>
+    <on-api-error>
+      <retry max-attempts="3" delay-seconds="5"/>
+      <on-exhausted>Send escalation to supervisor</on-exhausted>
+    </on-api-error>
+    <on-mail-unavailable>
+      <retry interval-seconds="60" max-attempts="10"/>
+      <on-exhausted>Enter HALTED state, await manual intervention</on-exhausted>
+    </on-mail-unavailable>
+  </error-handling>
+
+</tool>
