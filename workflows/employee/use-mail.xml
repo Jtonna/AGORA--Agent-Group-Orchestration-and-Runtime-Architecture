@@ -46,18 +46,31 @@
     </endpoint>
 
     <endpoint name="send-email">
-      <method>POST</method>
-      <path>/mail</path>
-      <headers>Content-Type: application/json; charset=utf-8</headers>
-      <body>{
-  "to": ["recipient-name"],
-  "from": "your-name",
-  "subject": "PREFIX: Subject here",
-  "content": "Message body",
-  "isResponseTo": "uuid-if-replying-or-null"
-}</body>
-      <returns>{ "id": "new-uuid", "message": "Email sent successfully" }</returns>
-      <note>"to" supports multiple recipients - use for collaboration requests or to CC your manager</note>
+      <windows>
+        <tool>scripts/send-mail.ps1</tool>
+        <recommended>.\scripts\send-mail.ps1 -From {your_name} -To {recipient} -Subject "PREFIX: Subject" -Content "Message"</recommended>
+        <options>
+          <option name="-From">Your agent name (required)</option>
+          <option name="-To">Recipient(s) - use "name1","name2" for multiple (required)</option>
+          <option name="-Subject">Email subject with prefix (required)</option>
+          <option name="-Content">Message body (required)</option>
+          <option name="-ReplyTo">UUID of email being replied to (optional)</option>
+        </options>
+      </windows>
+      <linux-macos>
+        <tool>scripts/send-mail.sh</tool>
+        <requires>jq</requires>
+        <recommended>./scripts/send-mail.sh --from {your_name} --to {recipient} --subject "PREFIX: Subject" --content "Message"</recommended>
+        <options>
+          <option name="--from">Your agent name (required)</option>
+          <option name="--to">Recipient(s) - comma-separated for multiple (required)</option>
+          <option name="--subject">Email subject with prefix (required)</option>
+          <option name="--content">Message body (required)</option>
+          <option name="--reply-to">UUID of email being replied to (optional)</option>
+        </options>
+      </linux-macos>
+      <output>Email sent: {uuid}</output>
+      <note>Use multiple recipients for collaboration requests or to CC your manager</note>
     </endpoint>
 
     <endpoint name="delete-email">
