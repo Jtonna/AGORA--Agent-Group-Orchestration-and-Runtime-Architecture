@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "The Corporation's Email",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

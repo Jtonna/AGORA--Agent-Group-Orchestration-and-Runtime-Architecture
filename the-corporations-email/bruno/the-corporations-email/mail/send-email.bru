@@ -1,0 +1,24 @@
+meta {
+  name: Send Email
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/mail
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json; charset=utf-8
+}
+
+body:json {
+  {
+    "to": ["alice", "bob"],
+    "from": "charlie",
+    "subject": "Test Email",
+    "content": "This is a test email body."
+  }
+}

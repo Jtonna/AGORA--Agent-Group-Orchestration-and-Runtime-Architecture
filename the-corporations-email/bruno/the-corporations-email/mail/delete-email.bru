@@ -1,0 +1,15 @@
+meta {
+  name: Delete Email
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{base_url}}/mail/{{email_id}}
+  body: none
+  auth: none
+}
+
+params:query {
+  viewer: {{viewer}}
+}

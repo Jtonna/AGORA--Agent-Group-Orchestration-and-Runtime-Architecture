@@ -1,0 +1,16 @@
+meta {
+  name: Get Inbox
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/mail
+  body: none
+  auth: none
+}
+
+params:query {
+  viewer: {{viewer}}
+  page: 1
+}
