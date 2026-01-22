@@ -28,18 +28,16 @@ export function App() {
   const selectedAgentName = selectedAgentIndex !== null ? AGENTS[selectedAgentIndex].name : null;
   const { inbox: agentInbox, refresh: refreshAgentInbox } = useAgentInbox(selectedAgentName);
 
-  const handleSendEmail = useCallback(async (email: NewEmail) => {
+  const handleSendEmail = useCallback(async (email: NewEmail): Promise<boolean> => {
     const success = await sendEmail(email);
-    if (success) {
-      setView('dashboard');
-      setReplyTo(null);
-    }
+    return success;
   }, [sendEmail]);
 
   const handleCancelCompose = useCallback(() => {
-    setView(selectedAgentIndex !== null ? 'agent-detail' : 'dashboard');
+    setView('dashboard');
+    setSelectedAgentIndex(null);
     setReplyTo(null);
-  }, [selectedAgentIndex]);
+  }, []);
 
   const handleReply = useCallback(() => {
     if (selectedEmail) {

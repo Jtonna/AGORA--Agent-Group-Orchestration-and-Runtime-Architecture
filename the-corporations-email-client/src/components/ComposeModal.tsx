@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import { AGENTS, SUBJECT_PREFIXES, type NewEmail } from '../types/email.js';
 
 interface ComposeModalProps {
-  onSend: (email: NewEmail) => void;
+  onSend: (email: NewEmail) => Promise<boolean>;
   onCancel: () => void;
   replyTo?: { from: string; subject: string; id: string };
 }
 
-type ComposeField = 'to' | 'prefix' | 'subject' | 'body';
+type ComposeField = 'to' | 'prefix' | 'subject' | 'body' | 'send';
+type ComposeState = 'editing' | 'sending' | 'sent' | 'error';
 
 export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
   const [activeField, setActiveField] = useState<ComposeField>('to');
@@ -17,10 +18,39 @@ export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
   const [prefixIndex, setPrefixIndex] = useState(0);
   const [subject, setSubject] = useState(replyTo ? `Re: ${replyTo.subject}` : '');
   const [body, setBody] = useState('');
+  const [state, setState] = useState<ComposeState>('editing');
+  const [countdown, setCountdown] = useState(5);
 
   const recipients = AGENTS.map((a) => a.name);
 
+  // Auto-redirect countdown after successful send
+  useEffect(() => {
+    if (state === 'sent') {
+      const timer = setInterval(() => {
+        setCountdown((c) => {
+          if (c <= 1) {
+            clearInterval(timer);
+            onCancel(); // Return to dashboard
+            return 0;
+          }
+          return c - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [state, onCancel]);
+
   useInput((input, key) => {
+    // Don't handle input during sending or after sent
+    if (state === 'sending') return;
+
+    if (state === 'sent') {
+      // Any key press returns immediately
+      onCancel();
+      return;
+    }
+
     if (key.escape) {
       onCancel();
       return;
@@ -32,7 +62,7 @@ export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
       } else if (key.rightArrow) {
         setToIndex((i) => (i < recipients.length - 1 ? i + 1 : 0));
       } else if (key.downArrow || key.tab) {
-        setActiveField('prefix');
+        setActiveField(replyTo ? 'subject' : 'prefix');
       }
     } else if (activeField === 'prefix') {
       if (key.leftArrow) {
@@ -48,19 +78,28 @@ export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
       if (key.downArrow || key.tab) {
         setActiveField('body');
       } else if (key.upArrow) {
-        setActiveField('prefix');
+        setActiveField(replyTo ? 'to' : 'prefix');
       }
     } else if (activeField === 'body') {
-      if (key.upArrow && body === '') {
+      if ((key.downArrow || key.tab) && body !== '') {
+        setActiveField('send');
+      } else if (key.tab) {
+        setActiveField('send');
+      } else if (key.upArrow && body === '') {
         setActiveField('subject');
       }
-      if (key.ctrl && input === 's') {
+    } else if (activeField === 'send') {
+      if (key.upArrow) {
+        setActiveField('body');
+      } else if (key.return) {
         handleSend();
       }
     }
   });
 
-  const handleSend = () => {
+  const handleSend = async () => {
+    setState('sending');
+
     const fullSubject = replyTo
       ? subject
       : `${SUBJECT_PREFIXES[prefixIndex]} ${subject}`;
@@ -73,9 +112,82 @@ export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
       ...(replyTo && { replyTo: replyTo.id }),
     };
 
-    onSend(email);
+    const success = await onSend(email);
+
+    if (success) {
+      setState('sent');
+      setCountdown(5);
+    } else {
+      setState('error');
+      // Reset to editing after showing error
+      setTimeout(() => setState('editing'), 2000);
+    }
   };
 
+  // Sent confirmation screen
+  if (state === 'sent') {
+    return (
+      <Box
+        flexDirection="column"
+        borderStyle="double"
+        borderColor="green"
+        padding={2}
+        width="60%"
+        alignItems="center"
+      >
+        <Text bold color="green">EMAIL SENT SUCCESSFULLY</Text>
+        <Box marginTop={1}>
+          <Text>To: </Text>
+          <Text bold>{recipients[toIndex].toUpperCase()}</Text>
+        </Box>
+        <Box marginTop={1}>
+          <Text dimColor>Returning to dashboard in </Text>
+          <Text bold color="yellow">{countdown}</Text>
+          <Text dimColor> seconds...</Text>
+        </Box>
+        <Box marginTop={1}>
+          <Text dimColor>(Press any key to return now)</Text>
+        </Box>
+      </Box>
+    );
+  }
+
+  // Sending state
+  if (state === 'sending') {
+    return (
+      <Box
+        flexDirection="column"
+        borderStyle="double"
+        borderColor="yellow"
+        padding={2}
+        width="60%"
+        alignItems="center"
+      >
+        <Text bold color="yellow">SENDING EMAIL...</Text>
+      </Box>
+    );
+  }
+
+  // Error state shows briefly then returns to editing
+  if (state === 'error') {
+    return (
+      <Box
+        flexDirection="column"
+        borderStyle="double"
+        borderColor="red"
+        padding={2}
+        width="60%"
+        alignItems="center"
+      >
+        <Text bold color="red">FAILED TO SEND EMAIL</Text>
+        <Box marginTop={1}>
+          <Text dimColor>Please try again...</Text>
+        </Box>
+      </Box>
+    );
+  }
+
+  // Normal editing view
   return (
     <Box
       flexDirection="column"
@@ -111,7 +223,7 @@ export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
           </Box>
         ))}
         {activeField === 'to' && (
-          <Text dimColor> ←/→ to select</Text>
+          <Text dimColor> (←/→ to select)</Text>
         )}
       </Box>
 
@@ -126,7 +238,7 @@ export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
             {SUBJECT_PREFIXES[prefixIndex]}
           </Text>
           {activeField === 'prefix' && (
-            <Text dimColor> ←/→ to change</Text>
+            <Text dimColor> (←/→ to change)</Text>
           )}
         </Box>
       )}
@@ -144,7 +256,7 @@ export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
           </Box>
         ) : (
           <Text color={subject ? 'white' : 'gray'}>
-            {subject || '(click to edit)'}
+            {subject || '(empty)'}
           </Text>
         )}
       </Box>
@@ -166,25 +278,40 @@ export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
             />
           ) : (
             <Text color={body ? 'white' : 'gray'}>
-              {body || '(click to edit)'}
+              {body || '(empty)'}
             </Text>
           )}
         </Box>
       </Box>
 
-      {/* Controls */}
-      <Box justifyContent="space-between" marginTop={1}>
-        <Box>
-          <Text dimColor>[</Text>
-          <Text color="green">Ctrl+S</Text>
-          <Text dimColor>] Send  </Text>
-          <Text dimColor>[</Text>
-          <Text color="yellow">Tab/↓</Text>
-          <Text dimColor>] Next field  </Text>
-          <Text dimColor>[</Text>
-          <Text color="red">Esc</Text>
-          <Text dimColor>] Cancel</Text>
+      {/* Send Button */}
+      <Box justifyContent="center" marginTop={1}>
+        <Box
+          borderStyle={activeField === 'send' ? 'double' : 'single'}
+          borderColor={activeField === 'send' ? 'green' : 'gray'}
+          paddingX={3}
+          paddingY={0}
+        >
+          <Text
+            bold
+            color={activeField === 'send' ? 'green' : 'white'}
+          >
+            {activeField === 'send' ? '[ SEND EMAIL ]' : '  SEND EMAIL  '}
+          </Text>
         </Box>
+      </Box>
+
+      {/* Controls */}
+      <Box justifyContent="center" marginTop={1}>
+        <Text dimColor>[</Text>
+        <Text color="yellow">Tab/↓</Text>
+        <Text dimColor>] Navigate  </Text>
+        <Text dimColor>[</Text>
+        <Text color="green">Enter</Text>
+        <Text dimColor>] Send (on button)  </Text>
+        <Text dimColor>[</Text>
+        <Text color="red">Esc</Text>
+        <Text dimColor>] Cancel</Text>
       </Box>
     </Box>
   );
