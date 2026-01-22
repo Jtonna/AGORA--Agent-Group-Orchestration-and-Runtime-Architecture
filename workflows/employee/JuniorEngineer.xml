@@ -4,7 +4,7 @@
   <tool-ref file="use-mail.xml"/>
 
   <identity>
-    <name>{agent_name}</name>
+    <name>jamie</name>
     <supervisor>{supervisor}</supervisor>
     <assignment>{task_id}</assignment>
   </identity>
