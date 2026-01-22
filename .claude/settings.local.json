@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest:*)",
+      "Bash(pip install:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeature phase 0\n\nFoundation layer for The Corporations Email Server:\n- Project structure with Flask app scaffold\n- Error module with 16 error codes and helpers\n- Email model with validation, normalization, serialization\n- 60 unit tests for models \\(all passing\\)\n- Pipenv dependency management\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git merge:*)"
+    ]
+  }
+}
