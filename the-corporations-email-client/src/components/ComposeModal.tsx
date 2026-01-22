@@ -21,7 +21,8 @@ export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
   const [state, setState] = useState<ComposeState>('editing');
   const [countdown, setCountdown] = useState(5);
 
-  const recipients = AGENTS.map((a) => a.name);
+  // Filter out CEO since emails are sent FROM CEO
+  const recipients = AGENTS.filter((a) => a.name !== 'ceo').map((a) => a.name);
 
   // Auto-redirect countdown after successful send
   useEffect(() => {

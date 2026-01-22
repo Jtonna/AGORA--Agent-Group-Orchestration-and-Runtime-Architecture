@@ -49,9 +49,10 @@ export interface AppState {
 }
 
 export const AGENTS: Agent[] = [
+  { name: 'ceo', role: 'CEO' },
   { name: 'mike', role: 'Manager' },
-  { name: 'jamie', role: 'Employee' },
   { name: 'justin', role: 'Tech Lead' },
+  { name: 'jamie', role: 'Employee' },
 ];
 
 export const SUBJECT_PREFIXES = [

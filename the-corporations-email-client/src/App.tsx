@@ -61,18 +61,13 @@ export function App() {
     if (view === 'dashboard') {
       if (input === 'r' || input === 'R') {
         refresh();
-      } else if (input === '1') {
-        setSelectedAgentIndex(0);
-        setSelectedEmailIndex(0);
-        setView('agent-detail');
-      } else if (input === '2') {
-        setSelectedAgentIndex(1);
-        setSelectedEmailIndex(0);
-        setView('agent-detail');
-      } else if (input === '3') {
-        setSelectedAgentIndex(2);
-        setSelectedEmailIndex(0);
-        setView('agent-detail');
+      } else if (input >= '1' && input <= '4') {
+        const agentIndex = parseInt(input, 10) - 1;
+        if (agentIndex < AGENTS.length) {
+          setSelectedAgentIndex(agentIndex);
+          setSelectedEmailIndex(0);
+          setView('agent-detail');
+        }
       } else if (input.toLowerCase() === 'c') {
         setView('compose');
       }

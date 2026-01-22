@@ -18,7 +18,7 @@ function getViewControls(view: ViewType): React.ReactNode {
           <Text bold>R</Text>
           <Text dimColor>] Refresh  </Text>
           <Text dimColor>[</Text>
-          <Text bold>1-3</Text>
+          <Text bold>1-4</Text>
           <Text dimColor>] View Agent  </Text>
           <Text dimColor>[</Text>
           <Text bold color="green">C</Text>
