@@ -103,6 +103,52 @@ export function App() {
     }
   });
 
+  // Show disconnected screen when API is unavailable
+  if (!apiConnected && !loading) {
+    return (
+      <Box flexDirection="column" width="100%" height="100%">
+        {/* Header */}
+        <Box
+          borderStyle="double"
+          borderColor="cyan"
+          justifyContent="center"
+          paddingX={1}
+        >
+          <Text bold color="cyan">
+            AGORA ORCHESTRATION DASHBOARD
+          </Text>
+        </Box>
+
+        {/* Disconnected Message */}
+        <Box flexDirection="column" flexGrow={1} alignItems="center" justifyContent="center">
+          <Text color="red" bold>● API DISCONNECTED</Text>
+          <Box marginTop={1}>
+            <Text>Unable to connect to mail server at localhost:60061</Text>
+          </Box>
+          <Box marginTop={1}>
+            <Text dimColor>Make sure the AGORA mail server is running</Text>
+          </Box>
+          <Box marginTop={2}>
+            <Text dimColor>[</Text>
+            <Text bold>R</Text>
+            <Text dimColor>] Retry Connection  </Text>
+            <Text dimColor>[</Text>
+            <Text bold color="red">Q</Text>
+            <Text dimColor>] Quit</Text>
+          </Box>
+        </Box>
+
+        {/* Status Bar */}
+        <StatusBar
+          view="dashboard"
+          apiConnected={false}
+          lastRefresh={lastRefresh}
+          loading={loading}
+        />
+      </Box>
+    );
+  }
+
   return (
     <Box flexDirection="column" width="100%" height="100%">
       {/* Header */}
