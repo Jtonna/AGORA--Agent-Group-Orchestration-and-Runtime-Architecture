@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Pipenv
+Pipfile.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Data files (keep structure, ignore contents)
+data/*.json
+!data/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
