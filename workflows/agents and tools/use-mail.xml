@@ -35,6 +35,11 @@
         </options>
       </linux-macos>
       <output>ID: {uuid} | FROM: {sender} | SUBJECT: {subject} | UNREAD</output>
+      <timeout-behavior>
+        Script exits after MaxRuntime (default 7 minutes) with exit code 1.
+        Agent MUST restart polling immediately if still waiting for a response.
+        Do NOT exit workflow on poll timeout - restart the poll script.
+      </timeout-behavior>
     </endpoint>
 
     <endpoint name="read-email">
@@ -107,6 +112,16 @@
     <prefix code="APPROVED">Work accepted</prefix>
     <prefix code="REVISION">Changes requested, needs rework</prefix>
   </subject-prefixes>
+
+  <!-- ===== COMMUNICATION RULES ===== -->
+
+  <communication-rules>
+    <rule>COMPLETE goes to supervisor only - NEVER CC collaborators</rule>
+    <rule>COLLABORATION REQUEST is peer-to-peer only - NEVER CC supervisor</rule>
+    <rule>Report PROGRESS to supervisor independently from collaborators</rule>
+    <rule>All help requests (QUESTION, CLARIFICATION, BLOCKED) are BLOCKING - wait for response from manager or collaborator</rule>
+    <rule>Replies use "RE: {original subject}" - server prepends RE: automatically when using ReplyTo</rule>
+  </communication-rules>
 
   <!-- ===== ERROR HANDLING ===== -->
 

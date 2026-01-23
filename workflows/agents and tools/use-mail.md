@@ -86,6 +86,11 @@ Subject: COLLABORATION REQUEST: Align on API response format for user endpoints
 - Preventing duplicate or conflicting implementations
 - Sharing information that affects another agent's work
 
+**IMPORTANT RULES:**
+- Send to peer agent(s) ONLY - **never CC your supervisor**
+- Each collaborator reports PROGRESS to their supervisor independently
+- This prevents deadlock where both parties wait for the other to act
+
 ---
 
 ## Status Updates
@@ -129,6 +134,11 @@ Work is finished and ready for review.
 ```
 Subject: COMPLETE: User authentication endpoint
 ```
+
+**IMPORTANT RULES:**
+- Send to your supervisor ONLY - **never CC collaborators**
+- This ensures clear ownership of the next action (supervisor reviews/delegates)
+- Prevents deadlock where multiple recipients wait for each other
 
 ### `APPROVED:`
 Work has been reviewed and accepted.
