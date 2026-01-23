@@ -570,6 +570,9 @@ def send_email():
         is_response_to=is_response_to
     )
 
+    # Auto-mark as read for sender (they wrote it, so they've "read" it)
+    email.mark_read_by(validated_data['from'])
+
     # Store email
     storage.create(email)
 
