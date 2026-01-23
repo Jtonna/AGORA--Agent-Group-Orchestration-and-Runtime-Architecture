@@ -85,7 +85,7 @@ export function ActivityFeed({
           return (
             <Box key={email.id} gap={2}>
               {/* Col 1: Selection indicator */}
-              <Box width={3}>
+              <Box width={2}>
                 {isSelected && <Text color="cyan">{'>'}</Text>}
                 {!isSelected && <Text>{' '}</Text>}
               </Box>
