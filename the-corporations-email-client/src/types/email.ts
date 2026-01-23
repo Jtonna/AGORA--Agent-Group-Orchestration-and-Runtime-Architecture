@@ -3,11 +3,11 @@ export interface Email {
   from: string;
   to: string[];
   subject: string;
-  body: string;
+  content: string;
   timestamp: string;
   read: boolean;
   threadId?: string;
-  replyTo?: string;
+  isResponseTo?: string;
 }
 
 export interface InboxResponse {
@@ -19,8 +19,8 @@ export interface NewEmail {
   from: string;
   to: string[];
   subject: string;
-  body: string;
-  replyTo?: string;
+  content: string;
+  isResponseTo?: string;
 }
 
 export interface Agent {

@@ -98,7 +98,7 @@ export function EmailDetail({ email, onBack, onReply }: EmailDetailProps) {
         flexGrow={1}
         minHeight={10}
       >
-        <Text>{email.body || '(No content)'}</Text>
+        <Text>{email.content || '(No content)'}</Text>
       </Box>
 
       {/* Controls */}

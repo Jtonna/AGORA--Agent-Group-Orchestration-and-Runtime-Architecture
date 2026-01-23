@@ -109,8 +109,8 @@ export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
       from: 'ceo',
       to: [recipients[toIndex]],
       subject: fullSubject,
-      body,
-      ...(replyTo && { replyTo: replyTo.id }),
+      content: body,
+      ...(replyTo && { isResponseTo: replyTo.id }),
     };
 
     const success = await onSend(email);

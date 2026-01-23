@@ -83,9 +83,9 @@ export function ThreadView({
                 <Text dimColor>  {formatTime(email.timestamp)}</Text>
               </Box>
 
-              {isSelected && email.body && (
+              {isSelected && email.content && (
                 <Box marginTop={1} marginLeft={2}>
-                  <Text wrap="wrap">{email.body}</Text>
+                  <Text wrap="wrap">{email.content}</Text>
                 </Box>
               )}
             </Box>
