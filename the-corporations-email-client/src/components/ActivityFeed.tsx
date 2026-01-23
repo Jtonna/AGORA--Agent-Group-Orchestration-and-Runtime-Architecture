@@ -32,17 +32,27 @@ function getPrefixColor(subject: string): string {
   return 'white';
 }
 
-function formatTime(timestamp: string): string {
+function formatRelativeTime(timestamp: string): string {
   try {
+    const now = new Date();
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
+    const diffMs = now.getTime() - date.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSecs < 60) return `${diffSecs}s ago`;
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) {
+      const mins = diffMins % 60;
+      return mins > 0 ? `${diffHours}h ${mins}m ago` : `${diffHours}h ago`;
+    }
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
   } catch {
-    return '--:--:--';
+    return '--';
   }
 }
 
@@ -78,18 +88,19 @@ export function ActivityFeed({
         displayedEmails.map((email, index) => {
           const isSelected = selectedIndex === index;
           const subjectColor = getPrefixColor(email.subject);
+          const isUnread = !email.read;
 
           return (
             <Box key={email.id}>
               {isSelected && <Text color="cyan">{'> '}</Text>}
               {!isSelected && <Text>{'  '}</Text>}
-              <Text dimColor>{formatTime(email.timestamp)}  </Text>
-              <Text bold>{email.from.padEnd(8)}</Text>
+              <Text dimColor={!isUnread}>{formatRelativeTime(email.timestamp).padEnd(12)}</Text>
+              <Text bold={isUnread}>{email.from.padEnd(8)}</Text>
               <Text dimColor> → </Text>
-              <Text>{(email.to[0] || '').padEnd(8)}</Text>
+              <Text bold={isUnread}>{(email.to[0] || '').padEnd(8)}</Text>
               <Text>  </Text>
-              <Text color={subjectColor}>{truncate(email.subject, 60)}</Text>
-              {!email.read && <Text color="yellow"> *</Text>}
+              <Text color={subjectColor} bold={isUnread}>{truncate(email.subject, 55)}</Text>
+              {isUnread && <Text color="yellow" bold> ●</Text>}
             </Box>
           );
         })

@@ -1,5 +1,6 @@
 # Send email via the corporation's email API
 # Usage: .\send-mail.ps1 -From "jamie" -To "mike" -Subject "COMPLETE: Task" -Content "Message body" [-ReplyTo "uuid"]
+# Note: For multiple recipients, use comma-separated: -To "mike,justin" or -To "mike","justin"
 
 param(
     [Parameter(Mandatory=$true)]
@@ -20,9 +21,12 @@ param(
 $BaseUrl = "http://localhost:60061"
 
 try {
+    # Handle comma-separated recipients (split each element on comma, then flatten)
+    $recipients = @($To | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim().ToLower() } | Where-Object { $_ -ne '' })
+
     $body = @{
         from = $From.ToLower()
-        to = @($To | ForEach-Object { $_.ToLower() })
+        to = $recipients
         subject = $Subject
         content = $Content
     }
