@@ -71,17 +71,6 @@ export function ActivityFeed({
 
   return (
     <Box flexDirection="column" flexGrow={1}>
-      <Box marginBottom={1} justifyContent="space-between">
-        <Text bold>RECENT MAILBOX ACTIVITY</Text>
-        <Box>
-          <Text dimColor>[LIVE </Text>
-          <Text color="green">●</Text>
-          <Text dimColor>]</Text>
-        </Box>
-      </Box>
-
-      <Box borderStyle="single" borderTop borderBottom={false} borderLeft={false} borderRight={false} />
-
       {displayedEmails.length === 0 ? (
         <Text dimColor>(No recent activity)</Text>
       ) : (
@@ -90,17 +79,37 @@ export function ActivityFeed({
           const subjectColor = getPrefixColor(email.subject);
           const isUnread = !email.read;
 
+          // Format: "from    → to      " = 8 + 3 + 8 = 19 chars
+          const peopleStr = `${email.from.padEnd(8)} → ${(email.to[0] || '').padEnd(8)}`;
+
           return (
-            <Box key={email.id}>
-              {isSelected && <Text color="cyan">{'> '}</Text>}
-              {!isSelected && <Text>{'  '}</Text>}
-              <Text dimColor={!isUnread}>{formatRelativeTime(email.timestamp).padEnd(12)}</Text>
-              <Text bold={isUnread}>{email.from.padEnd(8)}</Text>
-              <Text dimColor> → </Text>
-              <Text bold={isUnread}>{(email.to[0] || '').padEnd(8)}</Text>
-              <Text>  </Text>
-              <Text color={subjectColor} bold={isUnread}>{truncate(email.subject, 55)}</Text>
-              {isUnread && <Text color="yellow" bold> ●</Text>}
+            <Box key={email.id} gap={2}>
+              {/* Col 1: Selection indicator */}
+              <Box width={3}>
+                {isSelected && <Text color="cyan">{'>'}</Text>}
+                {!isSelected && <Text>{' '}</Text>}
+              </Box>
+
+              {/* Col 2: Read status indicator */}
+              <Box width={2}>
+                {isUnread && <Text color="yellow">●</Text>}
+                {!isUnread && <Text dimColor>○</Text>}
+              </Box>
+
+              {/* Col 2: People (from → to) - fixed width */}
+              <Box width={19}>
+                <Text bold={isUnread}>{peopleStr}</Text>
+              </Box>
+
+              {/* Col 3: Subject - flexible */}
+              <Box flexGrow={1}>
+                <Text color={subjectColor} bold={isUnread}>{truncate(email.subject, 45)}</Text>
+              </Box>
+
+              {/* Col 4: Timestamp - right */}
+              <Box>
+                <Text dimColor={!isUnread}>{formatRelativeTime(email.timestamp)}</Text>
+              </Box>
             </Box>
           );
         })

@@ -23,8 +23,7 @@ export function Dashboard({
     <Box flexDirection="column" flexGrow={1}>
       {/* Agents Section */}
       <Box flexDirection="column" marginBottom={1}>
-        <Text bold>AGENTS</Text>
-        <Box marginTop={1} gap={2}>
+        <Box gap={2}>
           {agentStats.map((agent, index) => (
             <AgentCard
               key={agent.name}
