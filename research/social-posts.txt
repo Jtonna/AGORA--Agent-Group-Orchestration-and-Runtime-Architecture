@@ -85,7 +85,7 @@ BOTH / GENERAL:
 
 [ ] "just let it cook" is copium for "i have no idea what it's doing"
 
-[X] multi-agent orchestration solves the problem of one agent being wrong by having five agents be wrong together (Threads 2026-01-23)
+[X] multi-agent orchestration solves the problem of one agent being wrong by having five agents be wrong together (Threads 2026-01-23, X 2026-01-23)
 
 [ ] we automated the easy part of coding and kept the hard part. congratulations to us
 
