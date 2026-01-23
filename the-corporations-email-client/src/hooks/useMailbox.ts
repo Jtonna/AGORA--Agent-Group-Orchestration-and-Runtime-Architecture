@@ -40,20 +40,25 @@ export function useMailbox(agents: typeof AGENTS) {
     let allEmails: Email[] = [];
 
     for (const agent of agents) {
-      const inbox = await getInbox(agent.name);
-      const unreadCount = inbox.filter((e) => !e.read).length;
-      const latestSubject = inbox[0]?.subject;
+      const allMail = await getInbox(agent.name);
+      const sent = allMail.filter((e) => e.from.toLowerCase() === agent.name.toLowerCase());
+      const received = allMail.filter((e) =>
+        e.to.some((t) => t.toLowerCase() === agent.name.toLowerCase())
+      );
+      const unread = received.filter((e) => !e.read);
+      const latestReceived = received[0]?.subject;
 
       stats.push({
         name: agent.name,
         role: agent.role,
-        inboxCount: inbox.length,
-        unreadCount,
-        status: determineStatus(latestSubject),
-        latestSubject,
+        sentCount: sent.length,
+        receivedCount: received.length,
+        unreadCount: unread.length,
+        status: determineStatus(latestReceived),
+        latestSubject: latestReceived,
       });
 
-      allEmails = [...allEmails, ...inbox];
+      allEmails = [...allEmails, ...allMail];
     }
 
     setAgentStats(stats);

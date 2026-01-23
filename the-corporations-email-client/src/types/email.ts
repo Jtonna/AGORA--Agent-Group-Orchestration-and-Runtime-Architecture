@@ -33,7 +33,8 @@ export type AgentStatus = 'active' | 'waiting' | 'blocked' | 'unknown';
 export interface AgentStats {
   name: string;
   role: string;
-  inboxCount: number;
+  sentCount: number;
+  receivedCount: number;
   unreadCount: number;
   status: AgentStatus;
   latestSubject?: string;

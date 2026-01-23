@@ -216,8 +216,9 @@ export function App() {
 
             <Box flexDirection="column" marginBottom={1}>
               <Text>
-                Inbox: {agentStats[selectedAgentIndex]?.inboxCount || 0} emails
+                Received: {agentStats[selectedAgentIndex]?.receivedCount || 0} emails
                 ({agentStats[selectedAgentIndex]?.unreadCount || 0} unread)
+                | Sent: {agentStats[selectedAgentIndex]?.sentCount || 0}
               </Text>
             </Box>
 

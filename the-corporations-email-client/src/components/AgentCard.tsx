@@ -49,8 +49,13 @@ export function AgentCard({ agent, selected, index }: AgentCardProps) {
       </Box>
 
       <Box>
-        <Text dimColor>Inbox: </Text>
-        <Text>{agent.inboxCount}</Text>
+        <Text dimColor>Sent: </Text>
+        <Text>{agent.sentCount}</Text>
+      </Box>
+
+      <Box>
+        <Text dimColor>Recv: </Text>
+        <Text>{agent.receivedCount}</Text>
       </Box>
 
       <Box>
