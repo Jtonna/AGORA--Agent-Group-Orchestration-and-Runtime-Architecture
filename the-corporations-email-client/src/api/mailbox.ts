@@ -21,8 +21,8 @@ export async function getInbox(viewer: string): Promise<Email[]> {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    const data: InboxResponse = await response.json();
-    return data.inbox || [];
+    const data = await response.json();
+    return data.data || [];
   } catch {
     return [];
   }
@@ -67,7 +67,7 @@ export async function getInvestigation(viewer: string): Promise<Email[]> {
       return [];
     }
     const data = await response.json();
-    return data.emails || [];
+    return data.data || [];
   } catch {
     return [];
   }
