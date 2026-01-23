@@ -50,8 +50,15 @@ try {
     # Polling mode
     Write-Host "Polling for new mail (interval: ${Interval}s, max runtime: $MaxRuntime minutes)..."
 
-    # Get initial unread IDs
+    # Check for existing unread emails FIRST
     $initialIds = @(Get-UnreadIds)
+    if ($initialIds.Count -gt 0) {
+        Write-Host "UNREAD MAIL:"
+        Print-NewEmails $initialIds
+        exit 0
+    }
+
+    # No existing unread mail - poll for new arrivals
     $startTime = Get-Date
     $maxSeconds = $MaxRuntime * 60
 

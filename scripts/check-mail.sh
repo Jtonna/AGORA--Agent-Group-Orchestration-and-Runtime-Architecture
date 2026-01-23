@@ -83,8 +83,15 @@ fi
 # Polling mode
 echo "Polling for new mail (interval: ${INTERVAL}s, max runtime: ${MAX_RUNTIME} minutes)..."
 
-# Get initial unread IDs
+# Check for existing unread emails FIRST
 initial_ids=$(get_unread_ids)
+if [ -n "$initial_ids" ]; then
+    echo "UNREAD MAIL:"
+    print_new_emails "$initial_ids"
+    exit 0
+fi
+
+# No existing unread mail - poll for new arrivals
 start_time=$(date +%s)
 max_seconds=$((MAX_RUNTIME * 60))
 
