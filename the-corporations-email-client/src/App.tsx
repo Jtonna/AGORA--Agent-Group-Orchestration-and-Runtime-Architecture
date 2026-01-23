@@ -5,6 +5,7 @@ import { EmailDetail } from './components/EmailDetail.js';
 import { ComposeModal } from './components/ComposeModal.js';
 import { StatusBar } from './components/StatusBar.js';
 import { useMailbox, useAgentInbox } from './hooks/useMailbox.js';
+import { getEmail } from './api/mailbox.js';
 import { AGENTS, type ViewType, type Email, type NewEmail } from './types/email.js';
 
 export function App() {
@@ -13,6 +14,9 @@ export function App() {
   const [selectedAgentIndex, setSelectedAgentIndex] = useState<number | null>(null);
   const [selectedEmailIndex, setSelectedEmailIndex] = useState(0);
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [emailThread, setEmailThread] = useState<Email[]>([]);
+  const [selectedActivityIndex, setSelectedActivityIndex] = useState(0);
+  const [previousView, setPreviousView] = useState<'dashboard' | 'agent-detail'>('dashboard');
   const [replyTo, setReplyTo] = useState<{ from: string; subject: string; id: string } | null>(null);
 
   const {
@@ -70,6 +74,21 @@ export function App() {
         }
       } else if (input.toLowerCase() === 'c') {
         setView('compose');
+      } else if (key.upArrow) {
+        setSelectedActivityIndex((i) => Math.max(0, i - 1));
+      } else if (key.downArrow) {
+        setSelectedActivityIndex((i) => Math.min(activityFeed.length - 1, i + 1));
+      } else if (key.return && activityFeed[selectedActivityIndex]) {
+        // Fetch email with thread and show detail
+        const emailToView = activityFeed[selectedActivityIndex];
+        getEmail(emailToView.id, 'ceo').then((result) => {
+          if (result) {
+            setSelectedEmail(result.email);
+            setEmailThread(result.thread);
+            setPreviousView('dashboard');
+            setView('email-detail');
+          }
+        });
       }
     }
 
@@ -85,8 +104,15 @@ export function App() {
       } else if (key.downArrow) {
         setSelectedEmailIndex((i) => Math.min(agentInbox.length - 1, i + 1));
       } else if (key.return && agentInbox[selectedEmailIndex]) {
-        setSelectedEmail(agentInbox[selectedEmailIndex]);
-        setView('email-detail');
+        const emailToView = agentInbox[selectedEmailIndex];
+        getEmail(emailToView.id, selectedAgentName || 'ceo').then((result) => {
+          if (result) {
+            setSelectedEmail(result.email);
+            setEmailThread(result.thread);
+            setPreviousView('agent-detail');
+            setView('email-detail');
+          }
+        });
       } else if (input.toLowerCase() === 'c') {
         setView('compose');
       }
@@ -95,8 +121,12 @@ export function App() {
     // Email detail controls
     else if (view === 'email-detail') {
       if (input.toLowerCase() === 'b') {
-        setView('agent-detail');
+        setView(previousView);
         setSelectedEmail(null);
+        setEmailThread([]);
+        if (previousView === 'dashboard') {
+          setSelectedAgentIndex(null);
+        }
       } else if (input.toLowerCase() === 'r') {
         handleReply();
       }
@@ -170,6 +200,7 @@ export function App() {
             agentStats={agentStats}
             activityFeed={activityFeed}
             selectedAgentIndex={selectedAgentIndex}
+            selectedActivityIndex={selectedActivityIndex}
             onSelectAgent={setSelectedAgentIndex}
           />
         )}
@@ -221,9 +252,14 @@ export function App() {
         {view === 'email-detail' && selectedEmail && (
           <EmailDetail
             email={selectedEmail}
+            thread={emailThread}
             onBack={() => {
-              setView('agent-detail');
+              setView(previousView);
               setSelectedEmail(null);
+              setEmailThread([]);
+              if (previousView === 'dashboard') {
+                setSelectedAgentIndex(null);
+              }
             }}
             onReply={handleReply}
           />

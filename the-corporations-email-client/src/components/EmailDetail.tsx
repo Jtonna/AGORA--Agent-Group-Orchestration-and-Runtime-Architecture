@@ -4,6 +4,7 @@ import type { Email } from '../types/email.js';
 
 interface EmailDetailProps {
   email: Email;
+  thread?: Email[];
   onBack: () => void;
   onReply: () => void;
 }
@@ -47,7 +48,7 @@ function getPrefixColor(subject: string): string {
   return 'white';
 }
 
-export function EmailDetail({ email, onBack, onReply }: EmailDetailProps) {
+export function EmailDetail({ email, thread, onBack, onReply }: EmailDetailProps) {
   const subjectColor = getPrefixColor(email.subject);
 
   return (
@@ -95,11 +96,44 @@ export function EmailDetail({ email, onBack, onReply }: EmailDetailProps) {
         borderColor="gray"
         flexDirection="column"
         padding={1}
-        flexGrow={1}
-        minHeight={10}
+        minHeight={5}
       >
         <Text>{email.content || '(No content)'}</Text>
       </Box>
+
+      {/* Thread Chain */}
+      {thread && thread.length > 0 && (
+        <Box flexDirection="column" marginTop={1}>
+          <Text bold dimColor>
+            CONVERSATION THREAD ({thread.length} {thread.length === 1 ? 'other message' : 'other messages'})
+          </Text>
+          {thread.map((e) => (
+            <Box
+              key={e.id}
+              flexDirection="column"
+              marginTop={1}
+              borderStyle="single"
+              borderColor="gray"
+              padding={1}
+            >
+              <Box>
+                <Text bold>{e.from.toUpperCase()}</Text>
+                <Text dimColor> → </Text>
+                <Text>{e.to.map((t) => t.toUpperCase()).join(', ')}</Text>
+                <Text dimColor>  {formatDate(e.timestamp)}</Text>
+              </Box>
+              <Box marginTop={1}>
+                <Text color={getPrefixColor(e.subject)}>{e.subject}</Text>
+              </Box>
+              {e.content && (
+                <Box marginTop={1}>
+                  <Text dimColor>{e.content.slice(0, 200)}{e.content.length > 200 ? '...' : ''}</Text>
+                </Box>
+              )}
+            </Box>
+          ))}
+        </Box>
+      )}
 
       {/* Controls */}
       <Box marginTop={1}>

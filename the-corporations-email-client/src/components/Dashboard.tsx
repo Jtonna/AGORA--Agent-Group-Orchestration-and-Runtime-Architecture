@@ -8,6 +8,7 @@ interface DashboardProps {
   agentStats: AgentStats[];
   activityFeed: Email[];
   selectedAgentIndex: number | null;
+  selectedActivityIndex: number;
   onSelectAgent: (index: number) => void;
 }
 
@@ -15,6 +16,7 @@ export function Dashboard({
   agentStats,
   activityFeed,
   selectedAgentIndex,
+  selectedActivityIndex,
   onSelectAgent,
 }: DashboardProps) {
   return (
@@ -45,7 +47,7 @@ export function Dashboard({
         paddingTop={1}
         flexGrow={1}
       >
-        <ActivityFeed emails={activityFeed} maxItems={15} />
+        <ActivityFeed emails={activityFeed} maxItems={15} selectedIndex={selectedActivityIndex} />
       </Box>
     </Box>
   );

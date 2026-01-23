@@ -15,14 +15,20 @@ function getViewControls(view: ViewType): React.ReactNode {
       return (
         <>
           <Text dimColor>[</Text>
-          <Text bold>R</Text>
-          <Text dimColor>] Refresh  </Text>
+          <Text bold>↑/↓</Text>
+          <Text dimColor>] Navigate  </Text>
+          <Text dimColor>[</Text>
+          <Text bold color="green">Enter</Text>
+          <Text dimColor>] View  </Text>
           <Text dimColor>[</Text>
           <Text bold>1-4</Text>
-          <Text dimColor>] View Agent  </Text>
+          <Text dimColor>] Agent  </Text>
           <Text dimColor>[</Text>
-          <Text bold color="green">C</Text>
+          <Text bold color="cyan">C</Text>
           <Text dimColor>] Compose  </Text>
+          <Text dimColor>[</Text>
+          <Text bold>R</Text>
+          <Text dimColor>] Refresh  </Text>
           <Text dimColor>[</Text>
           <Text bold color="red">Q</Text>
           <Text dimColor>] Quit</Text>

@@ -1,6 +1,11 @@
-import type { Email, InboxResponse, NewEmail } from '../types/email.js';
+import type { Email, NewEmail } from '../types/email.js';
 
 const API_BASE = 'http://localhost:60061';
+
+export interface EmailWithThread {
+  email: Email;
+  thread: Email[];
+}
 
 export async function checkHealth(): Promise<boolean> {
   try {
@@ -28,7 +33,7 @@ export async function getInbox(viewer: string): Promise<Email[]> {
   }
 }
 
-export async function getEmail(id: string, viewer: string): Promise<Email | null> {
+export async function getEmail(id: string, viewer: string): Promise<EmailWithThread | null> {
   try {
     const response = await fetch(`${API_BASE}/mail/${id}?viewer=${viewer}`, {
       signal: AbortSignal.timeout(5000),
@@ -36,7 +41,11 @@ export async function getEmail(id: string, viewer: string): Promise<Email | null
     if (!response.ok) {
       return null;
     }
-    return await response.json();
+    const data = await response.json();
+    return {
+      email: data.email,
+      thread: data.thread || [],
+    };
   } catch {
     return null;
   }
