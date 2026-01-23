@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mail version="3">
+
+  <about>
+    Core communication infrastructure for agent coordination.
+    This protocol is always loaded during startup. Every behavior assumes mail exists.
+  </about>
+
+  <!-- ===== HOW TO USE EMAIL ===== -->
+  <tools>
+    <about>Use these tools to check, read, send, and delete emails.</about>
+
+    <tool name="check-inbox">
+      <about>Check for new emails. Use polling mode when waiting for responses.</about>
+      <windows>.\scripts\check-mail.ps1 {your_name} -UnreadOnly -Poll</windows>
+      <unix>./scripts/check-mail.sh {your_name} --unread-only --poll</unix>
+      <output>ID: {uuid} | FROM: {sender} | SUBJECT: {subject} | UNREAD</output>
+      <note>Script times out after 7 minutes - restart polling if still waiting.</note>
+    </tool>
+
+    <tool name="read-email">
+      <about>Read full email content. Marks as read automatically.</about>
+      <request>GET http://localhost:60061/mail/{mail_id}?viewer={your_name}</request>
+      <note>Determine if email is directly to you or if you are CC'd. Decide based on content if reply is needed.</note>
+    </tool>
+
+    <tool name="send-email">
+      <about>Send an email. Always use a subject prefix.</about>
+      <windows>.\scripts\send-mail.ps1 -From {your_name} -To {recipient} -Subject "PREFIX: Subject" -Content "Message"</windows>
+      <unix>./scripts/send-mail.sh --from {your_name} --to {recipient} --subject "PREFIX: Subject" --content "Message"</unix>
+      <note>For multiple recipients use "jamie,justin" format. Use -ReplyTo {uuid} to thread a reply.</note>
+    </tool>
+
+    <tool name="delete-email">
+      <about>Soft delete - hides from your inbox only.</about>
+      <request>DELETE http://localhost:60061/mail/{mail_id}?viewer={your_name}</request>
+    </tool>
+  </tools>
+
+  <!-- ===== EMAIL TYPES ===== -->
+  <types>
+    <about>
+      All emails use a subject prefix to indicate type.
+      Each type defines what to do when you send or receive it.
+      When send has blocking="true", you must wait for a response before proceeding.
+    </about>
+
+    <!-- Task Assignment -->
+    <type prefix="GETTING STARTED">
+      <description>Task assignment to begin work</description>
+      <receive>Read the full task, determine requirements, and reply with ACKNOWLEDGED.</receive>
+    </type>
+
+    <type prefix="ACKNOWLEDGED">
+      <description>Confirms receipt and understanding</description>
+      <send>Reply to confirm you received and understand the task assignment.</send>
+    </type>
+
+    <!-- Help Requests -->
+    <type prefix="QUESTION">
+      <description>Pre-work question, need answer before starting</description>
+      <send blocking="true">Ask your supervisor. Wait for response before starting work.</send>
+      <receive>Answer the question so the sender can proceed.</receive>
+    </type>
+
+    <type prefix="CLARIFICATION">
+      <description>During-work question, need guidance to proceed</description>
+      <send blocking="true">Ask your supervisor or collaborator. Wait for response before continuing.</send>
+      <receive>Provide guidance so the sender can continue their work.</receive>
+    </type>
+
+    <type prefix="BLOCKED">
+      <description>Stuck on something, cannot continue</description>
+      <send blocking="true">Explain what is blocking you. Wait for help before continuing.</send>
+      <receive>Help resolve the blocker so the sender can continue.</receive>
+    </type>
+
+    <!-- Peer Coordination -->
+    <type prefix="COLLABORATION REQUEST">
+      <description>Coordinate with peer on shared work</description>
+      <send>Send to peer only - never CC supervisor. Specify what you need from them.</send>
+      <receive>Determine if action is needed. Coordinate directly with the sender.</receive>
+      <constraint>Report PROGRESS to your supervisor independently from collaborators.</constraint>
+    </type>
+
+    <!-- Status Updates -->
+    <type prefix="PROGRESS">
+      <description>Update after completing a phase</description>
+      <send>Send to your supervisor only. Include what was done, issues encountered, and what's next.</send>
+      <receive>Review progress and reply if course correction is needed.</receive>
+    </type>
+
+    <type prefix="IMPORTANT">
+      <description>Urgent course correction</description>
+      <send>Send to subordinate when they need to change direction immediately.</send>
+      <receive>Stop current work and adjust approach based on the message.</receive>
+    </type>
+
+    <!-- Completion -->
+    <type prefix="COMPLETE">
+      <description>Work finished, ready for review</description>
+      <send>Send to supervisor only - never CC collaborators. Include summary of completed work.</send>
+      <receive>Review the work and reply with APPROVED or REVISION.</receive>
+    </type>
+
+    <type prefix="APPROVED">
+      <description>Work accepted</description>
+      <send>Send to confirm work is accepted and task is complete.</send>
+      <receive>Task is complete. Proceed to shutdown or next assignment.</receive>
+    </type>
+
+    <type prefix="REVISION">
+      <description>Changes requested, needs rework</description>
+      <send>Specify what changes are needed and why.</send>
+      <receive>Read feedback, make changes, and resubmit with COMPLETE when done.</receive>
+    </type>
+  </types>
+
+</mail>
