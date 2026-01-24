@@ -119,6 +119,7 @@ export function Dashboard({
           maxItems={15}
           selectedIndex={selectedActivityIndex}
           focused={focusedSection === 'activity'}
+          interacting={focusedSection === 'activity' && interacting}
         />
       </Box>
     </Box>

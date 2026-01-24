@@ -205,16 +205,25 @@ export function App() {
         } else if (focusedSection === 'activity') {
           // Navigate within activity feed
           if (key.upArrow) {
-            if (selectedActivityIndex === 0) {
-              // At top - transition to hierarchy
+            if (selectedActivityIndex === -1) {
+              // Already at header - exit to hierarchy
               setFocusedSection('hierarchy');
               setInteracting(false);
+              setSelectedActivityIndex(0); // Reset for next time
+            } else if (selectedActivityIndex === 0) {
+              // At top email - move to header state
+              setSelectedActivityIndex(-1);
             } else {
               setSelectedActivityIndex((i) => i - 1);
             }
           } else if (key.downArrow) {
-            setSelectedActivityIndex((i) => Math.min(activityFeed.length - 1, i + 1));
-          } else if (key.return && activityFeed[selectedActivityIndex]) {
+            // If at header, move to first email
+            if (selectedActivityIndex === -1) {
+              setSelectedActivityIndex(0);
+            } else {
+              setSelectedActivityIndex((i) => Math.min(activityFeed.length - 1, i + 1));
+            }
+          } else if (key.return && selectedActivityIndex >= 0 && activityFeed[selectedActivityIndex]) {
             const emailToView = activityFeed[selectedActivityIndex];
             getEmail(emailToView.id, 'ceo').then((result) => {
               if (result) {
@@ -231,7 +240,7 @@ export function App() {
 
       // Hover mode: navigate between sections
       if (focusedSection === 'activity') {
-        // From activity feed
+        // From activity feed (hover mode - shouldn't normally happen since we auto-enter)
         if (key.upArrow) {
           setFocusedSection('hierarchy');
         } else if (key.return) {
@@ -243,7 +252,9 @@ export function App() {
         if (key.rightArrow) {
           setFocusedSection('agents');
         } else if (key.downArrow) {
+          // Enter activity feed directly
           setFocusedSection('activity');
+          setInteracting(true);
         } else if (key.return) {
           // Enter to start interacting with hierarchy
           setInteracting(true);
@@ -256,7 +267,9 @@ export function App() {
         if (key.leftArrow) {
           setFocusedSection('hierarchy');
         } else if (key.downArrow) {
+          // Enter activity feed directly
           setFocusedSection('activity');
+          setInteracting(true);
         } else if (key.return) {
           // Enter to start interacting with agent cards
           setInteracting(true);

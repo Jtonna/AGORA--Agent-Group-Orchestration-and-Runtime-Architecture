@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import type { Email } from '../types/email.js';
-import { HOVER_BORDER_COLOR } from '../utils/hierarchyColors.js';
+import { HOVER_BORDER_COLOR, INTERACT_BORDER_COLOR } from '../utils/hierarchyColors.js';
 
 interface ActivityFeedProps {
   emails: Email[];
@@ -9,6 +9,7 @@ interface ActivityFeedProps {
   onSelectEmail?: (email: Email) => void;
   selectedIndex?: number;
   focused?: boolean;
+  interacting?: boolean;
 }
 
 function getPrefixColor(subject: string): string {
@@ -69,13 +70,22 @@ export function ActivityFeed({
   onSelectEmail,
   selectedIndex,
   focused = false,
+  interacting = false,
 }: ActivityFeedProps) {
   const displayedEmails = emails.slice(0, maxItems);
+
+  // Header is selected when interacting and selectedIndex is -1
+  const headerSelected = interacting && selectedIndex === -1;
+  const headerColor = headerSelected
+    ? INTERACT_BORDER_COLOR
+    : (focused || interacting)
+    ? HOVER_BORDER_COLOR
+    : undefined;
 
   return (
     <Box flexDirection="column" flexGrow={1}>
       <Box marginBottom={1}>
-        <Text bold dimColor={!focused} color={focused ? HOVER_BORDER_COLOR : undefined}>
+        <Text bold dimColor={!focused && !interacting} color={headerColor}>
           ACTIVITY FEED
         </Text>
       </Box>
