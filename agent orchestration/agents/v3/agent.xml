@@ -16,6 +16,7 @@
     <task order="1" section="mail">
       <action>Understand the mail system</action>
       <notes>
+        DO NOT read mail.xml yet - just understand that mail exists from these notes.
         Mail is core infrastructure - it is always available to you.
         Every lifecycle phase involves communication. All help requests are blocking.
         COMPLETE goes to supervisor only. COLLABORATION REQUEST is peer-to-peer only.
@@ -43,10 +44,7 @@
   </tasks>
 
   <!-- ===== MAIL ===== -->
-  <mail>
-    <about>Core communication infrastructure for agent coordination.</about>
-    <tool-ref file="mail.xml"/>
-  </mail>
+  <mail file="mail.xml"/>
 
   <!-- ===== LIFECYCLE ===== -->
   <lifecycle>

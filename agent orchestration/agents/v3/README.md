@@ -121,6 +121,8 @@ Agent initialization and task receipt. This workflow is predefined and cannot be
 - Load full definitions for selected behaviors
 - Acknowledge receipt
 
+**On error:** If any task fails, send QUITTING email to supervisor AND ceo, then exit.
+
 ### runtime.xml (MODIFIABLE)
 
 Active work execution. This is where **behaviors inject and modify execution**.

@@ -12,8 +12,8 @@
 
     <tool name="check-inbox">
       <about>Check for new emails. Use polling mode when waiting for responses.</about>
-      <windows>.\scripts\check-mail.ps1 {your_name} -UnreadOnly -Poll</windows>
-      <unix>./scripts/check-mail.sh {your_name} --unread-only --poll</unix>
+      <windows>.\agent orchestration\scripts\check-mail.ps1 {your_name} -UnreadOnly -Poll</windows>
+      <unix>./agent\ orchestration/scripts/check-mail.sh {your_name} --unread-only --poll</unix>
       <output>ID: {uuid} | FROM: {sender} | SUBJECT: {subject} | UNREAD</output>
       <note>Script times out after 7 minutes - restart polling if still waiting.</note>
     </tool>
@@ -26,8 +26,8 @@
 
     <tool name="send-email">
       <about>Send an email. Always use a subject prefix.</about>
-      <windows>.\scripts\send-mail.ps1 -From {your_name} -To {recipient} -Subject "PREFIX: Subject" -Content "Message"</windows>
-      <unix>./scripts/send-mail.sh --from {your_name} --to {recipient} --subject "PREFIX: Subject" --content "Message"</unix>
+      <windows>.\agent orchestration\scripts\send-mail.ps1 -From {your_name} -To {recipient} -Subject "PREFIX: Subject" -Content "Message"</windows>
+      <unix>./agent\ orchestration/scripts/send-mail.sh --from {your_name} --to {recipient} --subject "PREFIX: Subject" --content "Message"</unix>
       <note>For multiple recipients use "jamie,justin" format. Use -ReplyTo {uuid} to thread a reply.</note>
     </tool>
 
@@ -113,6 +113,13 @@
       <description>Changes requested, needs rework</description>
       <send>Specify what changes are needed and why.</send>
       <receive>Read feedback, make changes, and resubmit with COMPLETE when done.</receive>
+    </type>
+
+    <!-- Exit -->
+    <type prefix="QUITTING">
+      <description>Agent is exiting due to an unrecoverable issue</description>
+      <send>Send to supervisor AND ceo. Explain what failed and why you cannot continue.</send>
+      <receive>An agent has quit - investigate the issue.</receive>
     </type>
   </types>
 

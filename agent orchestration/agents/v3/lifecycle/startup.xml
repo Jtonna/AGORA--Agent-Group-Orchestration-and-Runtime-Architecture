@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lifecycle phase="startup" fixed="true">
+
+  <about>
+    Agent initialization and task receipt.
+    This workflow is predefined and cannot be modified by behaviors.
+    You have already read agent.xml before entering this phase.
+  </about>
+
+  <tasks>
+    <task order="1">
+      <action>Load the mail protocol</action>
+      <do>Read mail.xml to learn how to communicate.</do>
+    </task>
+
+    <task order="2">
+      <action>Check your inbox for task assignment</action>
+      <do>Use check-inbox to find unread emails. Look for GETTING STARTED emails.</do>
+    </task>
+
+    <task order="3">
+      <action>Read and understand your task</action>
+      <do>Use read-email to get the full task details. Determine what is being asked of you.</do>
+    </task>
+
+    <task order="4">
+      <action>Select behaviors for your task</action>
+      <do>
+        Based on your task, select which behaviors you need from the catalog you already reviewed.
+        Only select behaviors that match your task requirements.
+      </do>
+    </task>
+
+    <task order="5">
+      <action>Load your selected behaviors</action>
+      <do>Read the full behavior file for each behavior you selected. Do not load behaviors you did not select.</do>
+    </task>
+
+    <task order="6">
+      <action>Acknowledge receipt</action>
+      <do>Send ACKNOWLEDGED email to your supervisor confirming you received and understand the task.</do>
+    </task>
+  </tasks>
+
+  <on-error>
+    <do>
+      If any task above fails:
+      1. Send QUITTING email to your supervisor AND ceo
+      2. Explain what failed and why
+      3. Exit - do not proceed to runtime phase
+    </do>
+  </on-error>
+
+  <next>Enter the runtime phase with your selected behaviors.</next>
+
+</lifecycle>
