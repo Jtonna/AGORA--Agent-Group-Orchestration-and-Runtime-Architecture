@@ -38,7 +38,7 @@ export function Dashboard({
           </Box>
 
           {/* Agent Cards Grid */}
-          <Box flexWrap="wrap" gap={2}>
+          <Box flexWrap="wrap" gap={1}>
             {agentStats.map((agent, index) => (
               <AgentCard
                 key={agent.name}

@@ -15,7 +15,6 @@ export function AgentCard({ agent, selected, index }: AgentCardProps) {
       borderStyle="single"
       borderColor={selected ? 'cyan' : 'gray'}
       paddingX={1}
-      width={18}
     >
       {/* [n] NAME */}
       <Box>
@@ -31,20 +30,13 @@ export function AgentCard({ agent, selected, index }: AgentCardProps) {
       <Box>
         <Text dimColor>S:</Text>
         <Text>{agent.sentCount}</Text>
-        <Text>  </Text>
+        <Text> </Text>
         <Text dimColor>R:</Text>
         <Text>{agent.receivedCount}</Text>
-        <Text>  </Text>
+        <Text> </Text>
         <Text dimColor>U:</Text>
         <Text color={agent.unreadCount > 0 ? 'yellow' : undefined}>
           {agent.unreadCount}
-        </Text>
-      </Box>
-
-      {/* → supervisor or (top-level) */}
-      <Box>
-        <Text dimColor>
-          {agent.supervisor ? `→ ${agent.supervisor}` : '(top-level)'}
         </Text>
       </Box>
     </Box>
