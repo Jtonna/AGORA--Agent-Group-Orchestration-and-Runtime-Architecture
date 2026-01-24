@@ -24,6 +24,10 @@ DUPLICATE_PARAMETER = "DUPLICATE_PARAMETER"
 UNKNOWN_FIELD = "UNKNOWN_FIELD"
 UNSUPPORTED_MEDIA_TYPE = "UNSUPPORTED_MEDIA_TYPE"
 
+# Agent directory errors
+NAME_TAKEN = "NAME_TAKEN"
+AGENT_NOT_FOUND = "AGENT_NOT_FOUND"
+
 
 # HTTP status code mapping for each error type
 ERROR_STATUS_CODES = {
@@ -43,6 +47,8 @@ ERROR_STATUS_CODES = {
     DUPLICATE_PARAMETER: 400,
     UNKNOWN_FIELD: 400,
     UNSUPPORTED_MEDIA_TYPE: 415,
+    NAME_TAKEN: 400,
+    AGENT_NOT_FOUND: 404,
 }
 
 
@@ -162,3 +168,13 @@ def error_unsupported_media_type(content_type: str = None) -> Tuple[Any, int]:
     else:
         message = "Content-Type must be 'application/json'"
     return create_error_response(message, UNSUPPORTED_MEDIA_TYPE)
+
+
+def error_name_taken(name: str) -> Tuple[Any, int]:
+    """Create error response for agent name already taken."""
+    return create_error_response(f"Agent name '{name}' is already taken", NAME_TAKEN)
+
+
+def error_agent_not_found(name: str) -> Tuple[Any, int]:
+    """Create error response for agent not found."""
+    return create_error_response(f"Agent '{name}' not found", AGENT_NOT_FOUND)

@@ -84,7 +84,12 @@ def populated_storage(fresh_storage):
     """
     Fixture providing storage pre-populated with test emails.
     Creates a set of emails for testing various scenarios.
+    Also registers agents in the directory for "everyone" expansion tests.
     """
+    # Register agents in directory (for "everyone" expansion)
+    for agent in ["alice", "bob", "charlie", "david", "eve"]:
+        fresh_storage.register_agent(agent)
+
     # Create test emails
     emails = []
 

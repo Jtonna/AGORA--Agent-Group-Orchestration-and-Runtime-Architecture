@@ -545,3 +545,25 @@ def get_deleted_status(email: Email, viewer: str) -> bool:
     """
     normalized_viewer = normalize_name(viewer)
     return normalized_viewer in email.deleted_by
+
+
+# ============================================================================
+# Agent Discovery
+# ============================================================================
+
+def get_all_known_agents(storage: Optional[EmailStorage] = None) -> List[str]:
+    """
+    Get all registered agent names from the directory.
+
+    Used for expanding "everyone" recipient to all known agents.
+
+    Args:
+        storage: Optional EmailStorage instance (uses singleton if not provided)
+
+    Returns:
+        Sorted list of registered agent names
+    """
+    if storage is None:
+        storage = get_storage()
+
+    return sorted(storage.get_registered_agent_names())

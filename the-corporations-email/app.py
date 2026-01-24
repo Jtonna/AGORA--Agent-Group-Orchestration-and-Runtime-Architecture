@@ -26,13 +26,15 @@ from storage import get_storage
 from services import (
     get_inbox_for_viewer, build_thread, mark_as_read, mark_as_deleted,
     paginate_inbox, paginate_thread, paginate_investigation, get_read_status,
-    validate_page_number, PaginationError, PAGE_SIZE_INVESTIGATION
+    validate_page_number, PaginationError, PAGE_SIZE_INVESTIGATION,
+    get_all_known_agents
 )
 from errors import (
     EMAIL_NOT_FOUND, EMAIL_DELETED, NOT_PARTICIPANT, PARENT_NOT_FOUND,
     MISSING_FIELD, INVALID_FIELD, INVALID_JSON, INVALID_UUID, INVALID_PAGE,
     INVALID_NAME, MISSING_VIEWER, INVALID_VIEWER, UNKNOWN_PARAMETER,
     DUPLICATE_PARAMETER, UNKNOWN_FIELD, UNSUPPORTED_MEDIA_TYPE,
+    NAME_TAKEN, AGENT_NOT_FOUND,
     ERROR_STATUS_CODES
 )
 
@@ -549,6 +551,23 @@ def send_email():
 
     storage = get_storage()
 
+    # Expand "everyone" to all known agents (excluding sender)
+    if 'everyone' in [name.lower() for name in validated_data['to']]:
+        all_agents = get_all_known_agents(storage)
+        sender = validated_data['from'].lower()
+
+        # Remove "everyone" and add all known agents (excluding sender)
+        expanded = [name for name in validated_data['to'] if name.lower() != 'everyone']
+        expanded.extend([agent for agent in all_agents if agent != sender])
+
+        # Deduplicate while preserving order
+        seen = set()
+        validated_data['to'] = [x for x in expanded if not (x in seen or seen.add(x))]
+
+        # Handle empty expansion (no known agents to broadcast to)
+        if not validated_data['to']:
+            raise AppError(INVALID_FIELD, "No known agents to broadcast to")
+
     # Check parent exists if this is a reply
     is_response_to = validated_data.get('isResponseTo')
     if is_response_to:
@@ -658,6 +677,113 @@ def get_investigation(name: str):
         result = paginate_investigation([e.to_dict() for e in matching_emails], page)
     except PaginationError as e:
         raise AppError(INVALID_PAGE, e.message)
+
+    return jsonify(result), 200
+
+
+# =============================================================================
+# Agent Directory Endpoints
+# =============================================================================
+
+@app.route('/directory/agents', methods=['GET'])
+def get_agents():
+    """
+    Get all registered agents with their PIDs.
+
+    Returns:
+        200 OK with list of agents
+    """
+    validate_query_params([])
+
+    storage = get_storage()
+    agents_dict = storage.get_all_agents()
+
+    agents_list = [
+        {"name": name, "pid": pid}
+        for name, pid in sorted(agents_dict.items())
+    ]
+
+    return jsonify({"agents": agents_list}), 200
+
+
+@app.route('/directory/agents', methods=['POST'])
+def register_agent():
+    """
+    Register a new agent (reserves name permanently).
+
+    Request Body:
+        {"name": "agent-name"}
+
+    Returns:
+        201 Created with agent info
+    """
+    validate_query_params([])
+    validate_content_type()
+
+    data = get_json_body()
+
+    # Validate request body
+    allowed_fields = {'name'}
+    unknown_fields = set(data.keys()) - allowed_fields
+    if unknown_fields:
+        raise AppError(UNKNOWN_FIELD, f"Unknown field in request: '{list(unknown_fields)[0]}'")
+
+    if 'name' not in data:
+        raise AppError(MISSING_FIELD, "Missing required field: 'name'")
+
+    name = data['name']
+    if not isinstance(name, str):
+        raise AppError(INVALID_FIELD, "Field 'name' must be a string")
+
+    name = name.strip().lower()
+    if not name:
+        raise AppError(INVALID_NAME, "Agent name cannot be empty or whitespace")
+
+    storage = get_storage()
+
+    # Check if name is available
+    if not storage.is_agent_name_available(name):
+        raise AppError(NAME_TAKEN, f"Agent name '{name}' is already taken")
+
+    # Register agent (spawn logic will be added later)
+    storage.register_agent(name, pid=None)
+
+    return jsonify({
+        "name": name,
+        "pid": None,
+        "message": "Agent registered successfully"
+    }), 201
+
+
+@app.route('/directory/agents/check', methods=['GET'])
+def check_agent_name():
+    """
+    Check if an agent name is available.
+
+    Query Parameters:
+        name (required): Name to check
+
+    Returns:
+        200 OK with availability status
+    """
+    validate_query_params(['name'])
+
+    # Get and validate name parameter
+    name = request.args.get('name')
+    if name is None:
+        raise AppError(MISSING_FIELD, "Missing required 'name' query parameter")
+
+    name = name.strip().lower()
+    if not name:
+        raise AppError(INVALID_NAME, "Name parameter cannot be empty or whitespace")
+
+    storage = get_storage()
+    available = storage.is_agent_name_available(name)
+
+    result = {
+        "name": name,
+        "available": available
+    }
 
     return jsonify(result), 200
 

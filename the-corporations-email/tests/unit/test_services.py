@@ -38,6 +38,8 @@ from services import (
     is_deleted_by,
     get_read_status,
     get_deleted_status,
+    # Agent discovery
+    get_all_known_agents,
 )
 
 
@@ -807,3 +809,45 @@ class TestServiceIntegration:
         # Verify delete status
         assert is_deleted_by(msg1.id, "bob", storage) is True
         assert is_deleted_by(msg1.id, "alice", storage) is False
+
+
+# ============================================================================
+# Agent Discovery Tests
+# ============================================================================
+
+class TestGetAllKnownAgents:
+    """Tests for get_all_known_agents function (uses directory registry)."""
+
+    def test_returns_empty_for_empty_registry(self, storage):
+        """Returns empty list when no agents registered."""
+        result = get_all_known_agents(storage)
+        assert result == []
+
+    def test_returns_registered_agents(self, storage):
+        """Returns agents from directory registry."""
+        storage.register_agent("alice")
+        storage.register_agent("bob")
+        storage.register_agent("charlie")
+
+        result = get_all_known_agents(storage)
+        assert sorted(result) == ["alice", "bob", "charlie"]
+
+    def test_returns_sorted_list(self, storage):
+        """Returns agents in sorted order."""
+        storage.register_agent("zara")
+        storage.register_agent("alice")
+        storage.register_agent("mike")
+
+        result = get_all_known_agents(storage)
+        assert result == ["alice", "mike", "zara"]
+
+    def test_agents_are_lowercase(self, storage):
+        """Agent names are stored lowercase."""
+        storage.register_agent("Alice")
+        storage.register_agent("BOB")
+
+        result = get_all_known_agents(storage)
+        # Names are normalized to lowercase
+        assert all(name.islower() for name in result)
+        assert "alice" in result
+        assert "bob" in result

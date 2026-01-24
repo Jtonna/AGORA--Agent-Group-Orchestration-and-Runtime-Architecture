@@ -93,6 +93,10 @@ class EmailStorage:
             self._emails: Dict[str, Email] = {}
             self._quarantined: List[Dict[str, Any]] = []
 
+            # Agent directory (in-memory only, no persistence)
+            self._agent_registry: Dict[str, Optional[int]] = {}  # name -> pid
+            self._registered_names: set = set()  # all names ever used (prevents reuse)
+
             # Operation queue for thread safety (RLock allows reentrant locking)
             self._operation_queue: Queue = Queue()
             self._queue_lock = threading.RLock()
@@ -105,6 +109,10 @@ class EmailStorage:
         Reset the singleton instance. Used primarily for testing.
         """
         with cls._lock:
+            # Reset agent registry if instance exists
+            if cls._instance is not None:
+                cls._instance._agent_registry = {}
+                cls._instance._registered_names = set()
             cls._instance = None
             cls._initialized = False
 
@@ -703,6 +711,84 @@ class EmailStorage:
             self._quarantine_email(email_data, reason)
             self._save_quarantine()
         self._execute_with_lock(_add)
+
+    # =========================================================================
+    # Agent Directory Methods (in-memory only)
+    # =========================================================================
+
+    def is_agent_name_available(self, name: str) -> bool:
+        """
+        Check if an agent name is available (never been used).
+
+        Args:
+            name: Agent name to check
+
+        Returns:
+            True if name is available, False if already used
+        """
+        def _check():
+            return normalize_name(name) not in self._registered_names
+        return self._execute_with_lock(_check)
+
+    def register_agent(self, name: str, pid: Optional[int] = None) -> None:
+        """
+        Register a new agent (reserves name permanently).
+
+        Args:
+            name: Agent name (will be normalized to lowercase)
+            pid: Process ID (optional, can be None)
+
+        Raises:
+            ValueError: If name is already taken
+        """
+        def _register():
+            normalized = normalize_name(name)
+            if normalized in self._registered_names:
+                raise ValueError(f"Agent name '{normalized}' is already taken")
+            self._registered_names.add(normalized)
+            self._agent_registry[normalized] = pid
+        self._execute_with_lock(_register)
+
+    def update_agent_pid(self, name: str, pid: int) -> bool:
+        """
+        Update an agent's PID.
+
+        Args:
+            name: Agent name
+            pid: New process ID
+
+        Returns:
+            True if agent exists and was updated, False if not found
+        """
+        def _update():
+            normalized = normalize_name(name)
+            if normalized not in self._registered_names:
+                return False
+            self._agent_registry[normalized] = pid
+            return True
+        return self._execute_with_lock(_update)
+
+    def get_all_agents(self) -> Dict[str, Optional[int]]:
+        """
+        Get all registered agents with their PIDs.
+
+        Returns:
+            Dictionary of agent name -> PID (PID can be None)
+        """
+        def _get():
+            return dict(self._agent_registry)
+        return self._execute_with_lock(_get)
+
+    def get_registered_agent_names(self) -> List[str]:
+        """
+        Get list of all registered agent names.
+
+        Returns:
+            List of agent names
+        """
+        def _get():
+            return list(self._agent_registry.keys())
+        return self._execute_with_lock(_get)
 
 
 # Module-level convenience function

@@ -500,6 +500,309 @@ class TestSendEmail:
         assert data['code'] == 'PARENT_NOT_FOUND'
 
 
+class TestEveryoneRecipient:
+    """Tests for 'everyone' recipient expansion."""
+
+    def test_everyone_expands_to_known_agents(self, populated_client):
+        """Sending to 'everyone' expands to all known agents."""
+        client, emails = populated_client
+        # Existing emails involve: alice, bob, charlie, david, eve
+
+        response = client.post(
+            '/mail',
+            data=json.dumps({
+                "to": ["everyone"],
+                "from": "admin",
+                "subject": "ANNOUNCEMENT: Test broadcast",
+                "content": "Broadcast message"
+            }),
+            content_type='application/json; charset=utf-8'
+        )
+        assert response.status_code == 201
+        email_id = response.get_json()['id']
+
+        # Verify the recipients were expanded
+        detail = client.get(f'/mail/{email_id}?viewer=admin')
+        data = detail.get_json()
+        to_list = data['email']['to']
+
+        # Should include all known agents from populated_client
+        assert 'alice' in to_list
+        assert 'bob' in to_list
+        assert 'charlie' in to_list
+        assert 'david' in to_list
+        assert 'eve' in to_list
+
+    def test_everyone_excludes_sender(self, populated_client):
+        """Sender is excluded from 'everyone' expansion."""
+        client, emails = populated_client
+
+        response = client.post(
+            '/mail',
+            data=json.dumps({
+                "to": ["everyone"],
+                "from": "alice",  # alice is a known agent
+                "subject": "ANNOUNCEMENT: From Alice",
+                "content": "Broadcast"
+            }),
+            content_type='application/json; charset=utf-8'
+        )
+        assert response.status_code == 201
+        email_id = response.get_json()['id']
+
+        detail = client.get(f'/mail/{email_id}?viewer=bob')
+        to_list = detail.get_json()['email']['to']
+
+        # alice should NOT be in the recipients (she's the sender)
+        assert 'alice' not in to_list
+        # But other agents should be
+        assert 'bob' in to_list
+
+    def test_everyone_mixed_with_explicit_recipients(self, populated_client):
+        """'everyone' can be mixed with explicit recipients."""
+        client, emails = populated_client
+
+        response = client.post(
+            '/mail',
+            data=json.dumps({
+                "to": ["everyone", "specific-user"],
+                "from": "admin",
+                "subject": "ANNOUNCEMENT: Mixed",
+                "content": "Message"
+            }),
+            content_type='application/json; charset=utf-8'
+        )
+        assert response.status_code == 201
+        email_id = response.get_json()['id']
+
+        detail = client.get(f'/mail/{email_id}?viewer=admin')
+        to_list = detail.get_json()['email']['to']
+
+        # Should include the explicit recipient
+        assert 'specific-user' in to_list
+        # And also the known agents
+        assert 'alice' in to_list
+
+    def test_everyone_deduplicates_recipients(self, populated_client):
+        """Duplicate recipients are removed after expansion."""
+        client, emails = populated_client
+
+        response = client.post(
+            '/mail',
+            data=json.dumps({
+                "to": ["everyone", "alice"],  # alice is also in "everyone"
+                "from": "admin",
+                "subject": "ANNOUNCEMENT: With duplicate",
+                "content": "Message"
+            }),
+            content_type='application/json; charset=utf-8'
+        )
+        assert response.status_code == 201
+        email_id = response.get_json()['id']
+
+        detail = client.get(f'/mail/{email_id}?viewer=admin')
+        to_list = detail.get_json()['email']['to']
+
+        # alice should appear only once
+        assert to_list.count('alice') == 1
+
+    def test_everyone_case_insensitive(self, populated_client):
+        """'EVERYONE' and 'Everyone' also expand."""
+        client, emails = populated_client
+
+        response = client.post(
+            '/mail',
+            data=json.dumps({
+                "to": ["EVERYONE"],
+                "from": "admin",
+                "subject": "ANNOUNCEMENT: Uppercase",
+                "content": "Message"
+            }),
+            content_type='application/json; charset=utf-8'
+        )
+        assert response.status_code == 201
+        email_id = response.get_json()['id']
+
+        detail = client.get(f'/mail/{email_id}?viewer=admin')
+        to_list = detail.get_json()['email']['to']
+
+        # Should have expanded to known agents
+        assert 'alice' in to_list
+        # 'everyone' itself should not be in the list
+        assert 'everyone' not in to_list
+        assert 'EVERYONE' not in to_list
+
+    def test_everyone_on_empty_system_returns_error(self, app_client):
+        """Sending to 'everyone' on empty system returns error."""
+        response = app_client.post(
+            '/mail',
+            data=json.dumps({
+                "to": ["everyone"],
+                "from": "admin",
+                "subject": "ANNOUNCEMENT: First broadcast",
+                "content": "Message"
+            }),
+            content_type='application/json; charset=utf-8'
+        )
+        # Should fail - no known agents to broadcast to
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data['code'] == 'INVALID_FIELD'
+        assert 'No known agents' in data['error']
+
+    def test_everyone_recipients_see_email_in_inbox(self, populated_client):
+        """Recipients from 'everyone' expansion can see email in inbox."""
+        client, emails = populated_client
+
+        response = client.post(
+            '/mail',
+            data=json.dumps({
+                "to": ["everyone"],
+                "from": "admin",
+                "subject": "ANNOUNCEMENT: Check inbox",
+                "content": "All should see this"
+            }),
+            content_type='application/json; charset=utf-8'
+        )
+        assert response.status_code == 201
+        email_id = response.get_json()['id']
+
+        # bob should see the email in their inbox
+        inbox = client.get('/mail?viewer=bob')
+        inbox_ids = [e['id'] for e in inbox.get_json()['data']]
+        assert email_id in inbox_ids
+
+
+class TestDirectoryEndpoints:
+    """Tests for /directory/agents endpoints."""
+
+    def test_get_agents_empty(self, app_client):
+        """GET /directory/agents returns empty list when no agents registered."""
+        response = app_client.get('/directory/agents')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data == {"agents": []}
+
+    def test_get_agents_returns_registered(self, app_client):
+        """GET /directory/agents returns all registered agents."""
+        # Register some agents
+        app_client.post(
+            '/directory/agents',
+            data=json.dumps({"name": "alice"}),
+            content_type='application/json; charset=utf-8'
+        )
+        app_client.post(
+            '/directory/agents',
+            data=json.dumps({"name": "bob"}),
+            content_type='application/json; charset=utf-8'
+        )
+
+        response = app_client.get('/directory/agents')
+        assert response.status_code == 200
+        data = response.get_json()
+        agents = data['agents']
+        names = [a['name'] for a in agents]
+        assert 'alice' in names
+        assert 'bob' in names
+
+    def test_register_agent_success(self, app_client):
+        """POST /directory/agents registers new agent."""
+        response = app_client.post(
+            '/directory/agents',
+            data=json.dumps({"name": "new-agent"}),
+            content_type='application/json; charset=utf-8'
+        )
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data['name'] == 'new-agent'
+        assert data['pid'] is None
+        assert data['message'] == 'Agent registered successfully'
+
+    def test_register_agent_normalizes_name(self, app_client):
+        """Agent names are normalized to lowercase."""
+        response = app_client.post(
+            '/directory/agents',
+            data=json.dumps({"name": "MyAgent"}),
+            content_type='application/json; charset=utf-8'
+        )
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data['name'] == 'myagent'
+
+    def test_register_agent_name_taken(self, app_client):
+        """Cannot register same name twice."""
+        app_client.post(
+            '/directory/agents',
+            data=json.dumps({"name": "alice"}),
+            content_type='application/json; charset=utf-8'
+        )
+
+        response = app_client.post(
+            '/directory/agents',
+            data=json.dumps({"name": "alice"}),
+            content_type='application/json; charset=utf-8'
+        )
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data['code'] == 'NAME_TAKEN'
+
+    def test_register_agent_missing_name(self, app_client):
+        """Missing name field returns 400."""
+        response = app_client.post(
+            '/directory/agents',
+            data=json.dumps({}),
+            content_type='application/json; charset=utf-8'
+        )
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data['code'] == 'MISSING_FIELD'
+
+    def test_register_agent_empty_name(self, app_client):
+        """Empty name returns 400."""
+        response = app_client.post(
+            '/directory/agents',
+            data=json.dumps({"name": "  "}),
+            content_type='application/json; charset=utf-8'
+        )
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data['code'] == 'INVALID_NAME'
+
+    def test_check_name_available(self, app_client):
+        """Check name returns available=true for new name."""
+        response = app_client.get('/directory/agents/check?name=newname')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['name'] == 'newname'
+        assert data['available'] is True
+
+    def test_check_name_taken(self, app_client):
+        """Check name returns available=false for taken name."""
+        app_client.post(
+            '/directory/agents',
+            data=json.dumps({"name": "taken"}),
+            content_type='application/json; charset=utf-8'
+        )
+
+        response = app_client.get('/directory/agents/check?name=taken')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['name'] == 'taken'
+        assert data['available'] is False
+
+    def test_check_name_missing(self, app_client):
+        """Check without name parameter returns 400."""
+        response = app_client.get('/directory/agents/check')
+        assert response.status_code == 400
+
+    def test_check_name_empty(self, app_client):
+        """Check with empty name returns 400."""
+        response = app_client.get('/directory/agents/check?name=')
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data['code'] == 'INVALID_NAME'
+
+
 class TestDeleteEmail:
     """Tests for DELETE /mail/{id} endpoint."""
 
