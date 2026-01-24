@@ -51,12 +51,12 @@ export function Dashboard({
   const agentsFocused = focusedSection === 'agents';
   const agentsInteracting = agentsFocused && interacting;
 
-  // Border color for agents section
-  const agentsBorderColor = agentsInteracting
+  // Header color for agents section
+  const agentsHeaderColor = agentsInteracting
     ? INTERACT_BORDER_COLOR
     : agentsFocused
     ? HOVER_BORDER_COLOR
-    : 'gray';
+    : undefined;
 
   return (
     <Box flexDirection="column" flexGrow={1}>
@@ -75,16 +75,10 @@ export function Dashboard({
         </Box>
 
         {/* Right: Agent Cards */}
-        <Box
-          flexDirection="column"
-          flexGrow={1}
-          borderStyle={agentsFocused ? 'single' : undefined}
-          borderColor={agentsBorderColor}
-          paddingX={agentsFocused ? 1 : 0}
-        >
+        <Box flexDirection="column" flexGrow={1}>
           {/* Legend */}
           <Box marginBottom={1}>
-            <Text bold dimColor>AGENTS  </Text>
+            <Text bold dimColor={!agentsFocused} color={agentsHeaderColor}>AGENTS  </Text>
             <Text dimColor>S=Sent  R=Received  U=Unread</Text>
           </Box>
 

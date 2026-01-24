@@ -107,21 +107,18 @@ export function HierarchyTree({
   const hasMore = allLines.length > scrollOffset + maxLines;
   const hasScrolledPast = scrollOffset > 0;
 
-  // Determine border color based on state
-  const borderColor = interacting
+  // Determine header color based on state
+  const headerColor = interacting
     ? INTERACT_BORDER_COLOR
     : focused
     ? HOVER_BORDER_COLOR
-    : 'gray';
+    : undefined;
 
   return (
-    <Box
-      flexDirection="column"
-      borderStyle={focused || interacting ? 'single' : undefined}
-      borderColor={borderColor}
-      paddingX={focused || interacting ? 1 : 0}
-    >
-      <Text bold dimColor>HIERARCHY</Text>
+    <Box flexDirection="column">
+      <Text bold dimColor={!focused && !interacting} color={headerColor}>
+        HIERARCHY
+      </Text>
       <Box flexDirection="column" marginTop={1}>
         {hasScrolledPast && (
           <Text dimColor>  ↑ more</Text>

@@ -158,13 +158,21 @@ export function App() {
               return offset;
             });
           } else if (key.downArrow) {
-            setSelectedAgentIndex((i) => Math.min(agentStats.length - 1, (i ?? 0) + 1));
-            // Auto-scroll hierarchy
-            setHierarchyScrollOffset((offset) => {
-              const newIndex = Math.min(agentStats.length - 1, (selectedAgentIndex ?? 0) + 1);
-              if (newIndex >= offset + 10) return newIndex - 9;
-              return offset;
-            });
+            const currentIndex = selectedAgentIndex ?? 0;
+            if (currentIndex >= agentStats.length - 1) {
+              // At bottom - transition to activity
+              setFocusedSection('activity');
+              setInteracting(false);
+              setSelectedAgentIndex(null);
+            } else {
+              setSelectedAgentIndex((i) => Math.min(agentStats.length - 1, (i ?? 0) + 1));
+              // Auto-scroll hierarchy
+              setHierarchyScrollOffset((offset) => {
+                const newIndex = Math.min(agentStats.length - 1, (selectedAgentIndex ?? 0) + 1);
+                if (newIndex >= offset + 10) return newIndex - 9;
+                return offset;
+              });
+            }
           } else if (key.return && selectedAgentIndex !== null) {
             openAgentInbox(selectedAgentIndex);
           }
@@ -172,7 +180,17 @@ export function App() {
           // Navigate within agent cards
           if (key.upArrow || key.leftArrow) {
             setSelectedAgentIndex((i) => Math.max(0, (i ?? 0) - 1));
-          } else if (key.downArrow || key.rightArrow) {
+          } else if (key.downArrow) {
+            const currentIndex = selectedAgentIndex ?? 0;
+            if (currentIndex >= maxCardIndex) {
+              // At bottom - transition to activity
+              setFocusedSection('activity');
+              setInteracting(false);
+              setSelectedAgentIndex(null);
+            } else {
+              setSelectedAgentIndex((i) => Math.min(maxCardIndex, (i ?? 0) + 1));
+            }
+          } else if (key.rightArrow) {
             setSelectedAgentIndex((i) => Math.min(maxCardIndex, (i ?? 0) + 1));
           } else if (key.return) {
             if (selectedAgentIndex === MAX_VISIBLE_CARDS && hasOverflow) {
@@ -187,7 +205,13 @@ export function App() {
         } else if (focusedSection === 'activity') {
           // Navigate within activity feed
           if (key.upArrow) {
-            setSelectedActivityIndex((i) => Math.max(0, i - 1));
+            if (selectedActivityIndex === 0) {
+              // At top - transition to hierarchy
+              setFocusedSection('hierarchy');
+              setInteracting(false);
+            } else {
+              setSelectedActivityIndex((i) => i - 1);
+            }
           } else if (key.downArrow) {
             setSelectedActivityIndex((i) => Math.min(activityFeed.length - 1, i + 1));
           } else if (key.return && activityFeed[selectedActivityIndex]) {
