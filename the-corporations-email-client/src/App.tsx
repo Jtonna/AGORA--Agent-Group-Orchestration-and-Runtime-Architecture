@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Box, Text, useApp, useInput, useStdoutDimensions } from 'ink';
+import { Box, Text, useApp, useInput, useStdout } from 'ink';
 import { Dashboard, MAX_VISIBLE_CARDS, type FocusedSection } from './components/Dashboard.js';
 import { CARD_WIDTH } from './components/AgentCard.js';
 import { EmailDetail } from './components/EmailDetail.js';
@@ -13,10 +13,11 @@ import type { ViewType, Email, NewEmail } from './types/email.js';
 
 export function App() {
   const { exit } = useApp();
-  const [terminalWidth] = useStdoutDimensions();
+  const { stdout } = useStdout();
 
   // Calculate cards per row based on terminal width
   const HIERARCHY_WIDTH = 27; // 26 width + 1 margin
+  const terminalWidth = stdout.columns || 80;
   const availableWidth = terminalWidth - HIERARCHY_WIDTH;
   const cardsPerRow = Math.max(1, Math.floor(availableWidth / CARD_WIDTH));
   const [view, setView] = useState<ViewType>('dashboard');
