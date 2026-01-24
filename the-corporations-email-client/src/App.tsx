@@ -1,11 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Box, Text, useApp, useInput } from 'ink';
-import { Dashboard } from './components/Dashboard.js';
+import { Dashboard, MAX_VISIBLE_CARDS } from './components/Dashboard.js';
 import { EmailDetail } from './components/EmailDetail.js';
 import { ComposeModal } from './components/ComposeModal.js';
 import { StatusBar } from './components/StatusBar.js';
+import { AgentListView } from './components/AgentListView.js';
 import { useMailbox, useAgentInbox } from './hooks/useMailbox.js';
 import { getEmail } from './api/mailbox.js';
+import { calculateAllDepths } from './utils/hierarchyColors.js';
 import type { ViewType, Email, NewEmail } from './types/email.js';
 
 export function App() {
@@ -18,6 +20,13 @@ export function App() {
   const [selectedActivityIndex, setSelectedActivityIndex] = useState(0);
   const [previousView, setPreviousView] = useState<'dashboard' | 'agent-detail'>('dashboard');
   const [replyTo, setReplyTo] = useState<{ from: string; subject: string; id: string } | null>(null);
+
+  // New navigation states
+  const [agentsFocused, setAgentsFocused] = useState(false);
+  const [showAgentList, setShowAgentList] = useState(false);
+  const [agentListIndex, setAgentListIndex] = useState(0);
+  const [agentListScrollOffset, setAgentListScrollOffset] = useState(0);
+  const [hierarchyScrollOffset, setHierarchyScrollOffset] = useState(0);
 
   const {
     apiConnected,
@@ -33,6 +42,13 @@ export function App() {
   const selectedAgentName = selectedAgentIndex !== null ? agents[selectedAgentIndex]?.name : null;
   const { inbox: agentInbox, refresh: refreshAgentInbox } = useAgentInbox(selectedAgentName);
 
+  // Calculate depths for agent list view
+  const depths = useMemo(() => calculateAllDepths(agentStats), [agentStats]);
+
+  // Max index for agent card navigation (including "+ more" card if present)
+  const hasOverflow = agentStats.length > MAX_VISIBLE_CARDS;
+  const maxCardIndex = hasOverflow ? MAX_VISIBLE_CARDS : agentStats.length - 1;
+
   const handleSendEmail = useCallback(async (email: NewEmail): Promise<boolean> => {
     const success = await sendEmail(email);
     return success;
@@ -41,6 +57,7 @@ export function App() {
   const handleCancelCompose = useCallback(() => {
     setView('dashboard');
     setSelectedAgentIndex(null);
+    setAgentsFocused(false);
     setReplyTo(null);
   }, []);
 
@@ -55,6 +72,17 @@ export function App() {
     }
   }, [selectedEmail]);
 
+  const openAgentInbox = useCallback((index: number) => {
+    if (index < agentStats.length) {
+      setSelectedAgentIndex(index);
+      setSelectedEmailIndex(0);
+      setPreviousView('dashboard');
+      setView('agent-detail');
+      setAgentsFocused(false);
+      setShowAgentList(false);
+    }
+  }, [agentStats.length]);
+
   useInput((input, key) => {
     // Global quit
     if (input.toLowerCase() === 'q' && view !== 'compose') {
@@ -62,16 +90,72 @@ export function App() {
       return;
     }
 
+    // Agent List View controls
+    if (showAgentList) {
+      if (key.escape) {
+        setShowAgentList(false);
+        setAgentListIndex(0);
+        setAgentListScrollOffset(0);
+      } else if (key.upArrow) {
+        setAgentListIndex((i) => {
+          const newIndex = Math.max(0, i - 1);
+          // Scroll up if needed
+          if (newIndex < agentListScrollOffset) {
+            setAgentListScrollOffset(newIndex);
+          }
+          return newIndex;
+        });
+      } else if (key.downArrow) {
+        setAgentListIndex((i) => {
+          const newIndex = Math.min(agentStats.length - 1, i + 1);
+          // Scroll down if needed
+          if (newIndex >= agentListScrollOffset + 15) {
+            setAgentListScrollOffset(newIndex - 14);
+          }
+          return newIndex;
+        });
+      } else if (key.return) {
+        openAgentInbox(agentListIndex);
+      }
+      return;
+    }
+
     // Dashboard controls
     if (view === 'dashboard') {
+      // Agent cards focused
+      if (agentsFocused) {
+        if (key.escape) {
+          setAgentsFocused(false);
+          setSelectedAgentIndex(null);
+        } else if (key.upArrow || key.downArrow || key.leftArrow || key.rightArrow) {
+          // Navigate in grid (simplified - up/left = prev, down/right = next)
+          if (key.upArrow || key.leftArrow) {
+            setSelectedAgentIndex((i) => Math.max(0, (i ?? 0) - 1));
+          } else {
+            setSelectedAgentIndex((i) => Math.min(maxCardIndex, (i ?? 0) + 1));
+          }
+        } else if (key.return) {
+          if (selectedAgentIndex === MAX_VISIBLE_CARDS && hasOverflow) {
+            // Open full agent list
+            setShowAgentList(true);
+            setAgentListIndex(0);
+            setAgentListScrollOffset(0);
+          } else if (selectedAgentIndex !== null) {
+            openAgentInbox(selectedAgentIndex);
+          }
+        }
+        return;
+      }
+
+      // Normal dashboard controls (not focused on agents)
       if (input === 'r' || input === 'R') {
         refresh();
       } else if (input >= '1' && input <= '9') {
+        // Focus agent cards section with number key
         const agentIndex = parseInt(input, 10) - 1;
-        if (agentIndex < agents.length) {
+        if (agentIndex <= maxCardIndex) {
           setSelectedAgentIndex(agentIndex);
-          setSelectedEmailIndex(0);
-          setView('agent-detail');
+          setAgentsFocused(true);
         }
       } else if (input.toLowerCase() === 'c') {
         setView('compose');
@@ -80,7 +164,6 @@ export function App() {
       } else if (key.downArrow) {
         setSelectedActivityIndex((i) => Math.min(activityFeed.length - 1, i + 1));
       } else if (key.return && activityFeed[selectedActivityIndex]) {
-        // Fetch email with thread and show detail
         const emailToView = activityFeed[selectedActivityIndex];
         getEmail(emailToView.id, 'ceo').then((result) => {
           if (result) {
@@ -95,7 +178,7 @@ export function App() {
 
     // Agent detail controls
     else if (view === 'agent-detail') {
-      if (input.toLowerCase() === 'b') {
+      if (input.toLowerCase() === 'b' || key.escape) {
         setView('dashboard');
         setSelectedAgentIndex(null);
       } else if (input === 'r' || input === 'R') {
@@ -121,7 +204,7 @@ export function App() {
 
     // Email detail controls
     else if (view === 'email-detail') {
-      if (input.toLowerCase() === 'b') {
+      if (input.toLowerCase() === 'b' || key.escape) {
         setView(previousView);
         setSelectedEmail(null);
         setEmailThread([]);
@@ -138,7 +221,6 @@ export function App() {
   if (!apiConnected && !loading) {
     return (
       <Box flexDirection="column" width="100%" height="100%">
-        {/* Header */}
         <Box
           borderStyle="double"
           borderColor="cyan"
@@ -150,7 +232,6 @@ export function App() {
           </Text>
         </Box>
 
-        {/* Disconnected Message */}
         <Box flexDirection="column" flexGrow={1} alignItems="center" justifyContent="center">
           <Text color="red" bold>● API DISCONNECTED</Text>
           <Box marginTop={1}>
@@ -169,7 +250,6 @@ export function App() {
           </Box>
         </Box>
 
-        {/* Status Bar */}
         <StatusBar
           view="dashboard"
           apiConnected={false}
@@ -182,7 +262,6 @@ export function App() {
 
   return (
     <Box flexDirection="column" width="100%" height="100%">
-      {/* Header */}
       <Box
         borderStyle="double"
         borderColor="cyan"
@@ -194,18 +273,31 @@ export function App() {
         </Text>
       </Box>
 
-      {/* Main Content Area */}
       <Box flexDirection="column" flexGrow={1} padding={1}>
-        {view === 'dashboard' && (
+        {/* Agent List View (overlay) */}
+        {showAgentList && (
+          <AgentListView
+            agents={agentStats}
+            depths={depths}
+            selectedIndex={agentListIndex}
+            scrollOffset={agentListScrollOffset}
+          />
+        )}
+
+        {/* Dashboard */}
+        {view === 'dashboard' && !showAgentList && (
           <Dashboard
             agentStats={agentStats}
             activityFeed={activityFeed}
             selectedAgentIndex={selectedAgentIndex}
             selectedActivityIndex={selectedActivityIndex}
             onSelectAgent={setSelectedAgentIndex}
+            agentsFocused={agentsFocused}
+            hierarchyScrollOffset={hierarchyScrollOffset}
           />
         )}
 
+        {/* Agent Detail */}
         {view === 'agent-detail' && selectedAgentIndex !== null && agents[selectedAgentIndex] && (
           <Box flexDirection="column" flexGrow={1}>
             <Box marginBottom={1}>
@@ -253,6 +345,7 @@ export function App() {
           </Box>
         )}
 
+        {/* Email Detail */}
         {view === 'email-detail' && selectedEmail && (
           <EmailDetail
             email={selectedEmail}
@@ -260,6 +353,7 @@ export function App() {
           />
         )}
 
+        {/* Compose */}
         {view === 'compose' && (
           <Box justifyContent="center" alignItems="center" flexGrow={1}>
             <ComposeModal
@@ -272,7 +366,6 @@ export function App() {
         )}
       </Box>
 
-      {/* Status Bar */}
       <StatusBar
         view={view}
         apiConnected={apiConnected}
