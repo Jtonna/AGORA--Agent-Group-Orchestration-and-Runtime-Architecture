@@ -92,7 +92,7 @@ export function Dashboard({
           </Box>
 
           {/* Agent Cards Grid */}
-          <Box flexWrap="wrap" columnGap={1} rowGap={1}>
+          <Box flexWrap="wrap" columnGap={1} rowGap={0}>
             {visibleAgents.map((agent, index) => (
               <AgentCard
                 key={agent.name}
