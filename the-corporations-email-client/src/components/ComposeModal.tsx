@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TextInput from 'ink-text-input';
-import { AGENTS, SUBJECT_PREFIXES, type NewEmail } from '../types/email.js';
+import { SUBJECT_PREFIXES, type NewEmail, type Agent } from '../types/email.js';
 
 interface ComposeModalProps {
   onSend: (email: NewEmail) => Promise<boolean>;
   onCancel: () => void;
   replyTo?: { from: string; subject: string; id: string };
+  agents: Agent[];
 }
 
 type ComposeField = 'to' | 'prefix' | 'subject' | 'body' | 'send';
 type ComposeState = 'editing' | 'sending' | 'sent' | 'error';
 
-export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
+export function ComposeModal({ onSend, onCancel, replyTo, agents }: ComposeModalProps) {
   const [activeField, setActiveField] = useState<ComposeField>('to');
   const [toIndex, setToIndex] = useState(0);
   const [prefixIndex, setPrefixIndex] = useState(0);
@@ -22,7 +23,7 @@ export function ComposeModal({ onSend, onCancel, replyTo }: ComposeModalProps) {
   const [countdown, setCountdown] = useState(5);
 
   // Filter out CEO since emails are sent FROM CEO
-  const recipients = AGENTS.filter((a) => a.name !== 'ceo').map((a) => a.name);
+  const recipients = agents.filter((a) => a.name !== 'ceo').map((a) => a.name);
 
   // Auto-redirect countdown after successful send
   useEffect(() => {

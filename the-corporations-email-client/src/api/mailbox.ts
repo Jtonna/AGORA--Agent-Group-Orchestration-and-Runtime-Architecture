@@ -1,10 +1,35 @@
-import type { Email, NewEmail } from '../types/email.js';
+import type { Email, NewEmail, Agent } from '../types/email.js';
 
 const API_BASE = 'http://localhost:60061';
 
 export interface EmailWithThread {
   email: Email;
   thread: Email[];
+}
+
+export interface DirectoryAgent {
+  name: string;
+  pid: number | null;
+  supervisor: string | null;
+}
+
+export async function getAgents(): Promise<Agent[]> {
+  try {
+    const response = await fetch(`${API_BASE}/directory/agents`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) {
+      return [];
+    }
+    const data = await response.json();
+    return (data.agents || []).map((a: DirectoryAgent) => ({
+      name: a.name,
+      supervisor: a.supervisor,
+      pid: a.pid,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function checkHealth(): Promise<boolean> {

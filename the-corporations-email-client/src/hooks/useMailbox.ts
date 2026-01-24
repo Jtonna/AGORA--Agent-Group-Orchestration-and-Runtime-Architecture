@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getInbox, checkHealth, sendEmail as apiSendEmail } from '../api/mailbox.js';
-import type { Email, AgentStats, AgentStatus, NewEmail, AGENTS } from '../types/email.js';
+import { getInbox, checkHealth, sendEmail as apiSendEmail, getAgents } from '../api/mailbox.js';
+import type { Email, AgentStats, AgentStatus, NewEmail, Agent } from '../types/email.js';
+import { CEO_AGENT } from '../types/email.js';
 
 function determineStatus(latestSubject?: string): AgentStatus {
   if (!latestSubject) return 'unknown';
@@ -18,8 +19,9 @@ function determineStatus(latestSubject?: string): AgentStatus {
   return 'waiting';
 }
 
-export function useMailbox(agents: typeof AGENTS) {
+export function useMailbox() {
   const [apiConnected, setApiConnected] = useState(false);
+  const [agents, setAgents] = useState<Agent[]>([CEO_AGENT]);
   const [agentStats, setAgentStats] = useState<AgentStats[]>([]);
   const [activityFeed, setActivityFeed] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,10 +38,18 @@ export function useMailbox(agents: typeof AGENTS) {
       return;
     }
 
+    // Fetch agents dynamically from backend
+    const backendAgents = await getAgents();
+    // Filter out CEO if returned by backend (we add it statically)
+    const filteredAgents = backendAgents.filter((a) => a.name.toLowerCase() !== 'ceo');
+    // CEO first, then backend agents
+    const allAgents = [CEO_AGENT, ...filteredAgents];
+    setAgents(allAgents);
+
     const stats: AgentStats[] = [];
     let allEmails: Email[] = [];
 
-    for (const agent of agents) {
+    for (const agent of allAgents) {
       const allMail = await getInbox(agent.name);
       const sent = allMail.filter((e) => e.from.toLowerCase() === agent.name.toLowerCase());
       const received = allMail.filter((e) =>
@@ -50,7 +60,7 @@ export function useMailbox(agents: typeof AGENTS) {
 
       stats.push({
         name: agent.name,
-        role: agent.role,
+        supervisor: agent.supervisor,
         sentCount: sent.length,
         receivedCount: received.length,
         unreadCount: unread.length,
@@ -77,7 +87,7 @@ export function useMailbox(agents: typeof AGENTS) {
     setActivityFeed(uniqueEmails);
     setLastRefresh(new Date());
     setLoading(false);
-  }, [agents]);
+  }, []);
 
   const sendEmail = useCallback(async (email: NewEmail): Promise<boolean> => {
     const success = await apiSendEmail(email);
@@ -96,6 +106,7 @@ export function useMailbox(agents: typeof AGENTS) {
 
   return {
     apiConnected,
+    agents,
     agentStats,
     activityFeed,
     loading,

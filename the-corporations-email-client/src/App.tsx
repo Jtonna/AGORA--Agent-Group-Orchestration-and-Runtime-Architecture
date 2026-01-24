@@ -6,7 +6,7 @@ import { ComposeModal } from './components/ComposeModal.js';
 import { StatusBar } from './components/StatusBar.js';
 import { useMailbox, useAgentInbox } from './hooks/useMailbox.js';
 import { getEmail } from './api/mailbox.js';
-import { AGENTS, type ViewType, type Email, type NewEmail } from './types/email.js';
+import type { ViewType, Email, NewEmail } from './types/email.js';
 
 export function App() {
   const { exit } = useApp();
@@ -21,15 +21,16 @@ export function App() {
 
   const {
     apiConnected,
+    agents,
     agentStats,
     activityFeed,
     loading,
     lastRefresh,
     refresh,
     sendEmail,
-  } = useMailbox(AGENTS);
+  } = useMailbox();
 
-  const selectedAgentName = selectedAgentIndex !== null ? AGENTS[selectedAgentIndex].name : null;
+  const selectedAgentName = selectedAgentIndex !== null ? agents[selectedAgentIndex]?.name : null;
   const { inbox: agentInbox, refresh: refreshAgentInbox } = useAgentInbox(selectedAgentName);
 
   const handleSendEmail = useCallback(async (email: NewEmail): Promise<boolean> => {
@@ -65,9 +66,9 @@ export function App() {
     if (view === 'dashboard') {
       if (input === 'r' || input === 'R') {
         refresh();
-      } else if (input >= '1' && input <= '4') {
+      } else if (input >= '1' && input <= '9') {
         const agentIndex = parseInt(input, 10) - 1;
-        if (agentIndex < AGENTS.length) {
+        if (agentIndex < agents.length) {
           setSelectedAgentIndex(agentIndex);
           setSelectedEmailIndex(0);
           setView('agent-detail');
@@ -205,13 +206,15 @@ export function App() {
           />
         )}
 
-        {view === 'agent-detail' && selectedAgentIndex !== null && (
+        {view === 'agent-detail' && selectedAgentIndex !== null && agents[selectedAgentIndex] && (
           <Box flexDirection="column" flexGrow={1}>
             <Box marginBottom={1}>
               <Text bold color="cyan">
-                AGENT: {AGENTS[selectedAgentIndex].name.toUpperCase()}
+                AGENT: {agents[selectedAgentIndex].name.toUpperCase()}
               </Text>
-              <Text dimColor> - {AGENTS[selectedAgentIndex].role}</Text>
+              {agents[selectedAgentIndex].supervisor && (
+                <Text dimColor> - reports to {agents[selectedAgentIndex].supervisor}</Text>
+              )}
             </Box>
 
             <Box flexDirection="column" marginBottom={1}>
@@ -263,6 +266,7 @@ export function App() {
               onSend={handleSendEmail}
               onCancel={handleCancelCompose}
               replyTo={replyTo || undefined}
+              agents={agents}
             />
           </Box>
         )}

@@ -25,14 +25,15 @@ export interface NewEmail {
 
 export interface Agent {
   name: string;
-  role: string;
+  supervisor?: string | null;
+  pid?: number | null;
 }
 
 export type AgentStatus = 'active' | 'waiting' | 'blocked' | 'unknown';
 
 export interface AgentStats {
   name: string;
-  role: string;
+  supervisor?: string | null;
   sentCount: number;
   receivedCount: number;
   unreadCount: number;
@@ -49,12 +50,8 @@ export interface AppState {
   composeData?: Partial<NewEmail>;
 }
 
-export const AGENTS: Agent[] = [
-  { name: 'ceo', role: 'CEO' },
-  { name: 'mike', role: 'Manager' },
-  { name: 'justin', role: 'Tech Lead' },
-  { name: 'jamie', role: 'Employee' },
-];
+// CEO is a static entry - always shown first, not a registered backend agent
+export const CEO_AGENT: Agent = { name: 'ceo', supervisor: null };
 
 export const SUBJECT_PREFIXES = [
   'GETTING STARTED:',

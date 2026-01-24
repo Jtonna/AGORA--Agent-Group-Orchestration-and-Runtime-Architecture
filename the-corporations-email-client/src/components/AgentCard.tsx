@@ -45,7 +45,7 @@ export function AgentCard({ agent, selected, index }: AgentCardProps) {
 
       <Box>
         <Text color={statusColor}>{getStatusIcon(agent.status)} </Text>
-        <Text>{agent.role}</Text>
+        <Text dimColor>{agent.supervisor ? `→ ${agent.supervisor}` : '(top-level)'}</Text>
       </Box>
 
       <Box>
