@@ -103,27 +103,93 @@ directory, then reassign this task to a new agent instance.
 
 ---
 
-## Test 4: (Future) Behavior File Loading
+## Test 4: Delegation Behavior
 
-**Purpose:** Verify agent loads correct behavior files and uses them in runtime
+**Purpose:** Verify agent uses delegation behavior correctly for complex tasks
 
-**Status:** BLOCKED - behavior files not yet created
+**Setup:**
+1. Spawn a test agent via API ✓
+2. Send GETTING STARTED email with large multi-part task ✓
+3. Agent should recognize task exceeds single-agent capacity and select delegation
+
+**Test Agent:** `george` (supervisor: `supervisor`)
+**Email ID:** `10fd1f5f-4f0c-475e-8ff4-9e657a5708be`
+
+**Task Email:**
+```
+To: george
+From: supervisor
+Subject: GETTING STARTED: Build complete e-commerce checkout system
+
+You are assigned to build a complete checkout system including:
+- Shopping cart management
+- Payment processing integration
+- Order confirmation emails
+- Inventory updates
+- Receipt generation
+
+This is a large project requiring multiple agents. Delegate appropriately.
+```
+
+**Expected Agent Behavior:**
+
+*Startup Phase:*
+1. Load mail.xml
+2. Check inbox, find GETTING STARTED
+3. Read and understand task
+4. Send ACKNOWLEDGED to supervisor
+5. Clarify if needed (may skip if task is clear)
+6. Plan approach - break into 5 sub-tasks
+7. Select `delegation` behavior (task complexity exceeds one agent)
+8. Load delegation.xml
+9. Announce: "Managing checkout system, covering cart, payments, emails, inventory, receipts"
+
+*Runtime Phase (delegation behavior):*
+1. Verify plan exists (5 sub-tasks identified)
+2. Spawn 5 sub-agents via `POST /agents/spawn`
+3. Send GETTING STARTED to each sub-agent with their sub-task
+4. Wait for ACKNOWLEDGED from each
+5. Monitor progress (poll inbox)
+
+**Verification Points:**
+- [ ] Agent selects `delegation` behavior
+- [ ] API calls: 5x `POST /agents/spawn` with `{ "supervisor": "{agent_name}" }`
+- [ ] Each spawn returns `{ "agent_name": "..." }`
+- [ ] GETTING STARTED emails sent to each spawned agent
+- [ ] Agent enters monitoring loop waiting for responses
+
+**How to Run:**
+1. Start a new Claude session as agent `george`
+2. Provide agent.xml as initial instructions with identity: `name=george, supervisor=supervisor`
+3. Agent should execute startup tasks and enter runtime with delegation behavior
+4. Observe API calls and emails sent
+
+**Result:** PENDING - Ready to execute
 
 ---
 
-## Test 5: (Future) Full Startup to Runtime Flow
+## Test 5: (Future) Full Delegation + Sub-agent Flow
 
-**Purpose:** Verify agent completes startup and enters runtime with loaded behaviors
+**Purpose:** Verify complete delegation cycle including sub-agent responses
 
-**Status:** BLOCKED - behavior files not yet created
+**Status:** BLOCKED - requires sub-agents to be functional (need code-writer behavior)
+
+**Will Test:**
+- Sub-agents receive GETTING STARTED
+- Sub-agents send ACKNOWLEDGED
+- Sub-agents send PROGRESS updates
+- Sub-agents send COMPLETE when done
+- Manager sends APPROVED/REVISION
+- Manager aggregates and sends COMPLETE to supervisor
 
 ---
 
 ## Notes
 
-- Test agent names used: `test-agent`, `jose`
+- Test agent names used: `test-agent`, `jose`, `george`
 - Supervisor names used: `supervisor`, `juan`
 - Email IDs:
   - `17fb4e24-b8c9-4536-badc-8f833efdce28` (test-agent task)
   - `cb8ccf73-fe32-4bb0-bdef-67fdb35f6d01` (jose task)
   - `088136c4-3065-45d4-a00b-ff08df97b9ae` (jose QUITTING)
+  - `10fd1f5f-4f0c-475e-8ff4-9e657a5708be` (george delegation test)

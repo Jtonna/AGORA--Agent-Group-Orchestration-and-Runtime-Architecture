@@ -76,6 +76,16 @@
     </type>
 
     <!-- Peer Coordination -->
+    <type prefix="ANNOUNCEMENT">
+      <description>Broadcast what you're working on for collaboration discovery</description>
+      <send>
+        Send to "everyone" describing WHAT and WHERE you're working.
+        Example: "Working on frontend auth module - implementing login API integration"
+        This helps peers identify collaboration opportunities.
+      </send>
+      <receive>A peer is working on this area. Consider COLLABORATION REQUEST if your work overlaps.</receive>
+    </type>
+
     <type prefix="COLLABORATION REQUEST">
       <description>Coordinate with peer on shared work</description>
       <send>Send to peer only - never CC supervisor. Specify what you need from them.</send>

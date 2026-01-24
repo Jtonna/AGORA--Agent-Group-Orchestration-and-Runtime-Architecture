@@ -6,7 +6,7 @@ AGORA uses a **behavior-based, composable architecture** for AI agents. Agents d
 
 - **Mail** - Core communication infrastructure (always loaded)
 - **Lifecycle** - Agent execution phases (startup → runtime → shutdown)
-- **Behaviors** - Composable capabilities selected at runtime
+- **Behaviors** - Composable capabilities selected at end of startup
 
 An agent reads its configuration, receives a task, and **synthesizes its own behavior** by selecting appropriate behaviors for that task.
 
@@ -25,11 +25,11 @@ An agent reads its configuration, receives a task, and **synthesizes its own beh
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         AGENT                               │
-│   BOOTSTRAP: read agent.xml → STARTUP: load mail, get task  │
-│   → select behaviors → RUNTIME: execute → SHUTDOWN: done    │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                                  AGENT                                    │
+│   BOOTSTRAP: read agent.xml → STARTUP: mail, task, clarify, plan,        │
+│   select behaviors, announce → RUNTIME: execute → SHUTDOWN: complete     │
+└──────────────────────────────────────────────────────────────────────────┘
                               │
         ┌─────────────────────┼─────────────────────┐
         ▼                     ▼                     ▼
@@ -104,6 +104,19 @@ An agent that doesn't communicate is an agent that can't coordinate. Mail is not
 
 *Protocol details (subject prefixes, endpoints, rules) are defined in mail.xml.*
 
+### Key Email Types
+
+| Type | Purpose |
+|------|---------|
+| GETTING STARTED | Task assignment to begin work |
+| PROGRESS | Status update after completing a phase |
+| COMPLETE | Work finished, ready for review |
+| BLOCKED | Stuck, cannot continue without help |
+| QUITTING | Agent exiting due to unrecoverable issue (send to supervisor AND ceo) |
+| ANNOUNCEMENT | Broadcast what/where you're working for peer discovery (send to "everyone") |
+
+**Special recipient**: `everyone` broadcasts to all active agents in the org.
+
 ---
 
 ## Lifecycle
@@ -114,12 +127,15 @@ The agent lifecycle has three phases. Two are **fixed** (predefined workflows), 
 
 Agent initialization and task receipt. This workflow is predefined and cannot be modified by behaviors. (Agent has already read agent.xml before entering this phase.)
 
-- Load mail.xml (communication protocol)
-- Read inbox for task assignment
-- Determine tasks from mail
-- Select behaviors from catalog (in agent.xml)
-- Load full definitions for selected behaviors
-- Acknowledge receipt
+1. Load mail.xml (communication protocol)
+2. Check inbox for task assignment
+3. Read and understand task
+4. Acknowledge receipt
+5. Clarify if needed (loop until enough information)
+6. Plan approach (break down task, decide delegate vs implement)
+7. Select behaviors from catalog
+8. Load full definitions for selected behaviors
+9. Announce work to "everyone"
 
 **On error:** If any task fails, send QUITTING email to supervisor AND ceo, then exit.
 
@@ -156,7 +172,7 @@ During startup, the agent reviews the **behavior catalog** (name + description o
 |----------|---------|---------------|
 | **code-writer** | Write, edit, implement code | Task involves implementation |
 | **collaboration** | Coordinate with peer agents | Working with others on related work |
-| **delegation** | Assign work, track reports | Agent has sub-agents or team |
+| **delegation** | Assign work, track reports | Task complexity exceeds what one agent should handle |
 | **review** | Evaluate work quality | Receives completed work from others |
 | **planning** | Break down complex tasks | Task is non-trivial or has multiple steps |
 
@@ -186,17 +202,21 @@ BOOTSTRAP:
 
 STARTUP (fixed):
   1. Load mail.xml (communication protocol)
-  2. Read inbox → receive task assignment
-  3. Review behavior catalog (from agent.xml)
-  4. Select behaviors needed for task
-  5. Load full definitions for selected behaviors
+  2. Check inbox → receive task assignment
+  3. Read and understand task
+  4. Acknowledge receipt
+  5. Clarify if needed (loop until enough info)
+  6. Plan approach (break down, decide delegate vs implement)
+  7. Select behaviors needed for task
+  8. Load full definitions for selected behaviors
+  9. Announce work to "everyone"
 
 RUNTIME (modifiable):
-  6. Execute with loaded behaviors
-     └── Agent synthesizes execution from selected behaviors
+  10. Execute with loaded behaviors
+      └── Agent synthesizes execution from selected behaviors
 
 SHUTDOWN (fixed):
-  7. Report completion, cleanup
+  11. Report completion, cleanup
 ```
 
 The agent only loads full behavior definitions for behaviors it actually needs - it doesn't load all behavior files upfront.

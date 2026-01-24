@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<behavior name="delegation">
+
+  <about>Manager loop - spawn sub-agents, assign work, monitor, aggregate.</about>
+
+  <tasks>
+
+    <task order="1">
+      <action>Verify plan exists</action>
+      <do>
+        Confirm you have a development plan with sub-tasks to delegate.
+        Plan can be high-level or detailed - you need delegatable units of work.
+        If no plan exists, create one before proceeding.
+        You must understand WHY and WHAT to validate sub-agent work.
+        If unclear, send CLARIFICATION to supervisor before spawning.
+      </do>
+    </task>
+
+    <task order="2">
+      <action>Spawn sub-agents</action>
+      <do>For each sub-task: call spawn API, record agent name.</do>
+      <api>
+        POST http://localhost:60061/agents/spawn
+        Body: { "supervisor": "{your_name}" }
+        Response: { "agent_name": "alice" }
+      </api>
+    </task>
+
+    <task order="3">
+      <action>Assign tasks</action>
+      <do>
+        Send GETTING STARTED to each sub-agent with task details.
+        Wait for ACKNOWLEDGED from each.
+      </do>
+    </task>
+
+    <task order="4">
+      <action>Monitor progress</action>
+      <do>
+        Poll inbox. Handle: PROGRESS, BLOCKED, COMPLETE, QUITTING.
+        If QUITTING: respawn or escalate.
+      </do>
+    </task>
+
+    <task order="5">
+      <action>Aggregate and complete</action>
+      <do>
+        Review work, send REVISION or APPROVED.
+        Report COMPLETE to your supervisor.
+      </do>
+    </task>
+
+  </tasks>
+
+  <on-error>
+    <do>If spawn fails or sub-agent issue unrecoverable: Send BLOCKED to supervisor.</do>
+  </on-error>
+
+</behavior>
