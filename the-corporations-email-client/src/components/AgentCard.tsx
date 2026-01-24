@@ -6,11 +6,10 @@ import { getDepthColor, SELECTION_COLOR, INTERACT_BORDER_COLOR } from '../utils/
 interface AgentCardProps {
   agent: AgentStats;
   selected?: boolean;
-  index: number;
   depth: number;
 }
 
-export function AgentCard({ agent, selected, index, depth }: AgentCardProps) {
+export function AgentCard({ agent, selected, depth }: AgentCardProps) {
   const depthColor = getDepthColor(depth);
   const displayColor = selected ? SELECTION_COLOR : depthColor;
   const borderColor = selected ? INTERACT_BORDER_COLOR : 'gray';
@@ -22,11 +21,8 @@ export function AgentCard({ agent, selected, index, depth }: AgentCardProps) {
       borderColor={borderColor}
       paddingX={1}
     >
-      {/* [n] NAME */}
+      {/* NAME */}
       <Box>
-        <Text dimColor>[</Text>
-        <Text bold color={displayColor}>{index + 1}</Text>
-        <Text dimColor>] </Text>
         <Text bold color={displayColor}>
           {agent.name.toUpperCase()}
         </Text>
@@ -34,14 +30,10 @@ export function AgentCard({ agent, selected, index, depth }: AgentCardProps) {
 
       {/* S:x  R:x  U:x */}
       <Box>
-        <Text dimColor>S:</Text>
-        <Text>{agent.sentCount}</Text>
-        <Text> </Text>
-        <Text dimColor>R:</Text>
-        <Text>{agent.receivedCount}</Text>
-        <Text> </Text>
+        <Text dimColor>S:{agent.sentCount} </Text>
+        <Text dimColor>R:{agent.receivedCount} </Text>
         <Text dimColor>U:</Text>
-        <Text color={agent.unreadCount > 0 ? 'yellow' : undefined}>
+        <Text color={agent.unreadCount > 0 ? 'yellow' : 'white'}>
           {agent.unreadCount}
         </Text>
       </Box>

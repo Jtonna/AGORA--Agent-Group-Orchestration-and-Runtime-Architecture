@@ -35,12 +35,21 @@ export function Dashboard({
   // Calculate depths for all agents
   const depths = useMemo(() => calculateAllDepths(agentStats), [agentStats]);
 
+  // Sort agents by hierarchy depth (CEO first, then their reports, etc.)
+  const sortedAgents = useMemo(() => {
+    return [...agentStats].sort((a, b) => {
+      const depthA = depths.get(a.name.toLowerCase()) || 0;
+      const depthB = depths.get(b.name.toLowerCase()) || 0;
+      return depthA - depthB;
+    });
+  }, [agentStats, depths]);
+
   // Determine visible cards and overflow
-  const hasOverflow = agentStats.length > MAX_VISIBLE_CARDS;
+  const hasOverflow = sortedAgents.length > MAX_VISIBLE_CARDS;
   const visibleAgents = hasOverflow
-    ? agentStats.slice(0, MAX_VISIBLE_CARDS)
-    : agentStats;
-  const overflowCount = agentStats.length - MAX_VISIBLE_CARDS;
+    ? sortedAgents.slice(0, MAX_VISIBLE_CARDS)
+    : sortedAgents;
+  const overflowCount = sortedAgents.length - MAX_VISIBLE_CARDS;
 
   // Check if "+ more" card is selected
   const isMoreCardSelected = selectedAgentIndex === MAX_VISIBLE_CARDS && hasOverflow;
@@ -83,12 +92,11 @@ export function Dashboard({
           </Box>
 
           {/* Agent Cards Grid */}
-          <Box flexWrap="wrap" gap={1}>
+          <Box flexWrap="wrap">
             {visibleAgents.map((agent, index) => (
               <AgentCard
                 key={agent.name}
                 agent={agent}
-                index={index}
                 depth={depths.get(agent.name.toLowerCase()) || 0}
                 selected={agentsInteracting && selectedAgentIndex === index}
               />
