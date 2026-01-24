@@ -10,7 +10,13 @@ interface AgentCardProps {
 
 export function AgentCard({ agent, selected, index }: AgentCardProps) {
   return (
-    <Box flexDirection="column" width={16}>
+    <Box
+      flexDirection="column"
+      borderStyle="single"
+      borderColor={selected ? 'cyan' : 'gray'}
+      paddingX={1}
+      width={18}
+    >
       {/* [n] NAME */}
       <Box>
         <Text dimColor>[</Text>

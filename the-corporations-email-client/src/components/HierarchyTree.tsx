@@ -57,10 +57,11 @@ interface TreeLineProps {
   selectedIndex: number | null;
 }
 
-function TreeLine({ node, prefix, isLast, selectedIndex }: TreeLineProps) {
-  const connector = prefix === '' ? '' : (isLast ? '└─' : '├─');
+function TreeLine({ node, prefix, isLast, isRoot, selectedIndex }: TreeLineProps & { isRoot?: boolean }) {
+  const connector = isRoot ? '' : (isLast ? '└─' : '├─');
   const isSelected = node.index === selectedIndex;
-  const childPrefix = prefix + (prefix === '' ? '' : (isLast ? '  ' : '│ '));
+  // For root nodes, children start with no prefix. For non-roots, add proper tree chars.
+  const childPrefix = isRoot ? '' : prefix + (isLast ? '  ' : '│ ');
 
   return (
     <>
@@ -77,6 +78,7 @@ function TreeLine({ node, prefix, isLast, selectedIndex }: TreeLineProps) {
           node={child}
           prefix={childPrefix}
           isLast={i === node.children.length - 1}
+          isRoot={false}
           selectedIndex={selectedIndex}
         />
       ))}
@@ -97,6 +99,7 @@ export function HierarchyTree({ agents, selectedIndex }: HierarchyTreeProps) {
             node={root}
             prefix=""
             isLast={i === roots.length - 1}
+            isRoot={true}
             selectedIndex={selectedIndex}
           />
         ))}
