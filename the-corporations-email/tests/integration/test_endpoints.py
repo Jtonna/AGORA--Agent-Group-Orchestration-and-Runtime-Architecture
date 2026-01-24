@@ -674,7 +674,7 @@ class TestEveryoneRecipient:
 
 
 class TestDirectoryEndpoints:
-    """Tests for /directory/agents endpoints."""
+    """Tests for /directory/agents and /agents/spawn endpoints."""
 
     def test_get_agents_empty(self, app_client):
         """GET /directory/agents returns empty list when no agents registered."""
@@ -683,124 +683,80 @@ class TestDirectoryEndpoints:
         data = response.get_json()
         assert data == {"agents": []}
 
-    def test_get_agents_returns_registered(self, app_client):
-        """GET /directory/agents returns all registered agents."""
-        # Register some agents
-        app_client.post(
-            '/directory/agents',
-            data=json.dumps({"name": "alice"}),
-            content_type='application/json; charset=utf-8'
-        )
-        app_client.post(
-            '/directory/agents',
-            data=json.dumps({"name": "bob"}),
-            content_type='application/json; charset=utf-8'
-        )
+    def test_get_agents_returns_spawned(self, app_client):
+        """GET /directory/agents returns all spawned agents."""
+        # Spawn some agents
+        app_client.post('/agents/spawn')
+        app_client.post('/agents/spawn')
 
         response = app_client.get('/directory/agents')
         assert response.status_code == 200
         data = response.get_json()
         agents = data['agents']
+        assert len(agents) == 2
+        # Each agent should have name, pid, and supervisor
+        for agent in agents:
+            assert 'name' in agent
+            assert 'pid' in agent
+            assert 'supervisor' in agent
+            assert isinstance(agent['name'], str)
+            assert len(agent['name']) > 0
+
+    def test_spawn_agent_success(self, app_client):
+        """POST /agents/spawn creates agent with auto-generated name."""
+        response = app_client.post('/agents/spawn')
+        assert response.status_code == 201
+        data = response.get_json()
+        assert 'agent_name' in data
+        assert isinstance(data['agent_name'], str)
+        assert len(data['agent_name']) > 0
+        assert data['agent_name'].islower()  # Names are lowercase
+
+    def test_spawn_generates_unique_names(self, app_client):
+        """Multiple spawns generate unique names."""
+        names_seen = set()
+        for _ in range(10):
+            response = app_client.post('/agents/spawn')
+            assert response.status_code == 201
+            name = response.get_json()['agent_name']
+            assert name not in names_seen, f"Duplicate name generated: {name}"
+            names_seen.add(name)
+
+    def test_spawn_agent_appears_in_directory(self, app_client):
+        """Spawned agent appears in GET /directory/agents."""
+        spawn_response = app_client.post('/agents/spawn')
+        spawned_name = spawn_response.get_json()['agent_name']
+
+        list_response = app_client.get('/directory/agents')
+        agents = list_response.get_json()['agents']
         names = [a['name'] for a in agents]
-        assert 'alice' in names
-        assert 'bob' in names
+        assert spawned_name in names
 
-    def test_register_agent_success(self, app_client):
-        """POST /directory/agents registers new agent."""
+    def test_spawn_with_supervisor(self, app_client):
+        """POST /agents/spawn with supervisor stores it."""
         response = app_client.post(
-            '/directory/agents',
-            data=json.dumps({"name": "new-agent"}),
+            '/agents/spawn',
+            data=json.dumps({"supervisor": "mike"}),
             content_type='application/json; charset=utf-8'
         )
         assert response.status_code == 201
-        data = response.get_json()
-        assert data['name'] == 'new-agent'
-        assert data['pid'] is None
-        assert data['message'] == 'Agent registered successfully'
+        spawned_name = response.get_json()['agent_name']
 
-    def test_register_agent_normalizes_name(self, app_client):
-        """Agent names are normalized to lowercase."""
-        response = app_client.post(
-            '/directory/agents',
-            data=json.dumps({"name": "MyAgent"}),
-            content_type='application/json; charset=utf-8'
-        )
-        assert response.status_code == 201
-        data = response.get_json()
-        assert data['name'] == 'myagent'
+        # Check supervisor is stored
+        list_response = app_client.get('/directory/agents')
+        agents = list_response.get_json()['agents']
+        agent = next(a for a in agents if a['name'] == spawned_name)
+        assert agent['supervisor'] == 'mike'
 
-    def test_register_agent_name_taken(self, app_client):
-        """Cannot register same name twice."""
-        app_client.post(
-            '/directory/agents',
-            data=json.dumps({"name": "alice"}),
-            content_type='application/json; charset=utf-8'
-        )
+    def test_spawn_without_supervisor(self, app_client):
+        """POST /agents/spawn without supervisor has null supervisor."""
+        response = app_client.post('/agents/spawn')
+        spawned_name = response.get_json()['agent_name']
 
-        response = app_client.post(
-            '/directory/agents',
-            data=json.dumps({"name": "alice"}),
-            content_type='application/json; charset=utf-8'
-        )
-        assert response.status_code == 400
-        data = response.get_json()
-        assert data['code'] == 'NAME_TAKEN'
-
-    def test_register_agent_missing_name(self, app_client):
-        """Missing name field returns 400."""
-        response = app_client.post(
-            '/directory/agents',
-            data=json.dumps({}),
-            content_type='application/json; charset=utf-8'
-        )
-        assert response.status_code == 400
-        data = response.get_json()
-        assert data['code'] == 'MISSING_FIELD'
-
-    def test_register_agent_empty_name(self, app_client):
-        """Empty name returns 400."""
-        response = app_client.post(
-            '/directory/agents',
-            data=json.dumps({"name": "  "}),
-            content_type='application/json; charset=utf-8'
-        )
-        assert response.status_code == 400
-        data = response.get_json()
-        assert data['code'] == 'INVALID_NAME'
-
-    def test_check_name_available(self, app_client):
-        """Check name returns available=true for new name."""
-        response = app_client.get('/directory/agents/check?name=newname')
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data['name'] == 'newname'
-        assert data['available'] is True
-
-    def test_check_name_taken(self, app_client):
-        """Check name returns available=false for taken name."""
-        app_client.post(
-            '/directory/agents',
-            data=json.dumps({"name": "taken"}),
-            content_type='application/json; charset=utf-8'
-        )
-
-        response = app_client.get('/directory/agents/check?name=taken')
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data['name'] == 'taken'
-        assert data['available'] is False
-
-    def test_check_name_missing(self, app_client):
-        """Check without name parameter returns 400."""
-        response = app_client.get('/directory/agents/check')
-        assert response.status_code == 400
-
-    def test_check_name_empty(self, app_client):
-        """Check with empty name returns 400."""
-        response = app_client.get('/directory/agents/check?name=')
-        assert response.status_code == 400
-        data = response.get_json()
-        assert data['code'] == 'INVALID_NAME'
+        list_response = app_client.get('/directory/agents')
+        agents = list_response.get_json()['agents']
+        agent = next(a for a in agents if a['name'] == spawned_name)
+        assert agent['supervisor'] is None
 
 
 class TestDeleteEmail:

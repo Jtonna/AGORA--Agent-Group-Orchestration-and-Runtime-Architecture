@@ -17,6 +17,8 @@ tags:
     description: Email operations
   - name: Investigation
     description: Administrative email investigation
+  - name: Directory
+    description: Agent directory management
 
 paths:
   /health:
@@ -329,6 +331,67 @@ paths:
                     error: "Name parameter cannot be empty or whitespace"
                     code: INVALID_NAME
 
+  /directory/agents:
+    get:
+      tags:
+        - Directory
+      summary: List all agents
+      description: |
+        Get all registered agents with their names and process IDs.
+
+        **Note:** PIDs may be null if the agent has not yet been fully spawned.
+      operationId: getAgents
+      responses:
+        '200':
+          description: Agent list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Agent'
+
+  /agents/spawn:
+    post:
+      tags:
+        - Directory
+      summary: Spawn new agent
+      description: |
+        Spawn a new agent with an auto-generated unique name.
+
+        **Name generation:** Uses the `names` library to generate random human first names.
+        If a collision occurs, a random suffix is appended (e.g., "alice-7k2m").
+
+        **Name uniqueness:** Agent names are globally unique forever. Once a name is used,
+        it can never be reused, even if the agent is no longer active.
+      operationId: spawnAgent
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                supervisor:
+                  type: string
+                  description: Name of the agent that is spawning this one
+                  example: mike
+      responses:
+        '201':
+          description: Agent spawned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agent_name:
+                    type: string
+                    description: Auto-generated unique agent name (lowercase)
+                    example: alice
+
 components:
   parameters:
     viewer:
@@ -377,6 +440,27 @@ components:
             - DUPLICATE_PARAMETER
             - UNKNOWN_FIELD
             - UNSUPPORTED_MEDIA_TYPE
+            - NAME_TAKEN
+            - AGENT_NOT_FOUND
+
+    Agent:
+      type: object
+      description: Registered agent in the directory
+      properties:
+        name:
+          type: string
+          description: Agent name (lowercase)
+          example: alice
+        pid:
+          type: integer
+          nullable: true
+          description: Process ID of the agent (null if not yet spawned)
+          example: 12345
+        supervisor:
+          type: string
+          nullable: true
+          description: Name of the agent that spawned this one (null if top-level)
+          example: mike
 
     SendEmailRequest:
       type: object
@@ -391,7 +475,11 @@ components:
           items:
             type: string
           minItems: 1
-          description: Recipient names (will be normalized to lowercase, deduplicated)
+          description: |
+            Recipient names (will be normalized to lowercase, deduplicated).
+
+            **Special value "everyone":** Expands to all registered agents in the directory,
+            excluding the sender. Can be combined with other recipients.
           example: ["alice", "bob"]
         from:
           type: string

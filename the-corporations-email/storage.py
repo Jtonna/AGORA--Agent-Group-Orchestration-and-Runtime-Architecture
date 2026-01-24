@@ -94,7 +94,8 @@ class EmailStorage:
             self._quarantined: List[Dict[str, Any]] = []
 
             # Agent directory (in-memory only, no persistence)
-            self._agent_registry: Dict[str, Optional[int]] = {}  # name -> pid
+            # name -> {"pid": int|None, "supervisor": str|None}
+            self._agent_registry: Dict[str, dict] = {}
             self._registered_names: set = set()  # all names ever used (prevents reuse)
 
             # Operation queue for thread safety (RLock allows reentrant locking)
@@ -730,13 +731,14 @@ class EmailStorage:
             return normalize_name(name) not in self._registered_names
         return self._execute_with_lock(_check)
 
-    def register_agent(self, name: str, pid: Optional[int] = None) -> None:
+    def register_agent(self, name: str, pid: Optional[int] = None, supervisor: Optional[str] = None) -> None:
         """
         Register a new agent (reserves name permanently).
 
         Args:
             name: Agent name (will be normalized to lowercase)
             pid: Process ID (optional, can be None)
+            supervisor: Name of the agent that spawned this one (optional)
 
         Raises:
             ValueError: If name is already taken
@@ -746,7 +748,10 @@ class EmailStorage:
             if normalized in self._registered_names:
                 raise ValueError(f"Agent name '{normalized}' is already taken")
             self._registered_names.add(normalized)
-            self._agent_registry[normalized] = pid
+            self._agent_registry[normalized] = {
+                "pid": pid,
+                "supervisor": normalize_name(supervisor) if supervisor else None
+            }
         self._execute_with_lock(_register)
 
     def update_agent_pid(self, name: str, pid: int) -> bool:
@@ -764,16 +769,16 @@ class EmailStorage:
             normalized = normalize_name(name)
             if normalized not in self._registered_names:
                 return False
-            self._agent_registry[normalized] = pid
+            self._agent_registry[normalized]["pid"] = pid
             return True
         return self._execute_with_lock(_update)
 
-    def get_all_agents(self) -> Dict[str, Optional[int]]:
+    def get_all_agents(self) -> Dict[str, dict]:
         """
-        Get all registered agents with their PIDs.
+        Get all registered agents with their info.
 
         Returns:
-            Dictionary of agent name -> PID (PID can be None)
+            Dictionary of agent name -> {"pid": int|None, "supervisor": str|None}
         """
         def _get():
             return dict(self._agent_registry)

@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from functools import wraps
 from typing import List, Optional, Tuple, Any, Dict
 
+import names
+
 from flask import Flask, g, request, jsonify, Response
 from flask_cors import CORS
 
@@ -688,10 +690,10 @@ def get_investigation(name: str):
 @app.route('/directory/agents', methods=['GET'])
 def get_agents():
     """
-    Get all registered agents with their PIDs.
+    Get all registered agents with their info.
 
     Returns:
-        200 OK with list of agents
+        200 OK with list of agents including pid and supervisor
     """
     validate_query_params([])
 
@@ -699,93 +701,70 @@ def get_agents():
     agents_dict = storage.get_all_agents()
 
     agents_list = [
-        {"name": name, "pid": pid}
-        for name, pid in sorted(agents_dict.items())
+        {"name": name, "pid": info["pid"], "supervisor": info["supervisor"]}
+        for name, info in sorted(agents_dict.items())
     ]
 
     return jsonify({"agents": agents_list}), 200
 
 
-@app.route('/directory/agents', methods=['POST'])
-def register_agent():
+@app.route('/agents/spawn', methods=['POST'])
+def spawn_agent():
     """
-    Register a new agent (reserves name permanently).
+    Spawn a new agent with auto-generated unique name.
 
-    Request Body:
-        {"name": "agent-name"}
+    Request Body (optional):
+        { "supervisor": "agent-name" }
 
     Returns:
-        201 Created with agent info
+        201 Created with generated agent name and info
     """
     validate_query_params([])
-    validate_content_type()
-
-    data = get_json_body()
-
-    # Validate request body
-    allowed_fields = {'name'}
-    unknown_fields = set(data.keys()) - allowed_fields
-    if unknown_fields:
-        raise AppError(UNKNOWN_FIELD, f"Unknown field in request: '{list(unknown_fields)[0]}'")
-
-    if 'name' not in data:
-        raise AppError(MISSING_FIELD, "Missing required field: 'name'")
-
-    name = data['name']
-    if not isinstance(name, str):
-        raise AppError(INVALID_FIELD, "Field 'name' must be a string")
-
-    name = name.strip().lower()
-    if not name:
-        raise AppError(INVALID_NAME, "Agent name cannot be empty or whitespace")
 
     storage = get_storage()
 
-    # Check if name is available
-    if not storage.is_agent_name_available(name):
-        raise AppError(NAME_TAKEN, f"Agent name '{name}' is already taken")
+    # Parse optional supervisor from body
+    supervisor = None
+    if request.data:
+        try:
+            data = request.get_json(force=True)
+            if data and isinstance(data, dict):
+                supervisor = data.get('supervisor')
+                if supervisor and isinstance(supervisor, str):
+                    supervisor = supervisor.strip().lower()
+                else:
+                    supervisor = None
+        except Exception:
+            pass  # Ignore invalid JSON, proceed without supervisor
+
+    # Generate unique name using names library
+    max_attempts = 100
+    name = None
+
+    for _ in range(max_attempts):
+        base_name = names.get_first_name().lower()
+
+        if storage.is_agent_name_available(base_name):
+            name = base_name
+            break
+
+        # Add random suffix for collision
+        suffix = secrets.token_hex(2)  # 4 chars like "7k2m"
+        suffixed_name = f"{base_name}-{suffix}"
+
+        if storage.is_agent_name_available(suffixed_name):
+            name = suffixed_name
+            break
+
+    if name is None:
+        raise AppError("INTERNAL_ERROR", "Failed to generate unique agent name")
 
     # Register agent (spawn logic will be added later)
-    storage.register_agent(name, pid=None)
+    storage.register_agent(name, pid=None, supervisor=supervisor)
 
     return jsonify({
-        "name": name,
-        "pid": None,
-        "message": "Agent registered successfully"
+        "agent_name": name
     }), 201
-
-
-@app.route('/directory/agents/check', methods=['GET'])
-def check_agent_name():
-    """
-    Check if an agent name is available.
-
-    Query Parameters:
-        name (required): Name to check
-
-    Returns:
-        200 OK with availability status
-    """
-    validate_query_params(['name'])
-
-    # Get and validate name parameter
-    name = request.args.get('name')
-    if name is None:
-        raise AppError(MISSING_FIELD, "Missing required 'name' query parameter")
-
-    name = name.strip().lower()
-    if not name:
-        raise AppError(INVALID_NAME, "Name parameter cannot be empty or whitespace")
-
-    storage = get_storage()
-    available = storage.is_agent_name_available(name)
-
-    result = {
-        "name": name,
-        "available": available
-    }
-
-    return jsonify(result), 200
 
 
 # =============================================================================
