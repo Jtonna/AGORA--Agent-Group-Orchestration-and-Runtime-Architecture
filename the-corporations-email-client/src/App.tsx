@@ -177,21 +177,25 @@ export function App() {
             openAgentInbox(selectedAgentIndex);
           }
         } else if (focusedSection === 'agents') {
-          // Navigate within agent cards
-          if (key.upArrow || key.leftArrow) {
+          // Navigate within agent cards (grid layout)
+          const CARDS_PER_ROW = 4;
+          if (key.leftArrow) {
             setSelectedAgentIndex((i) => Math.max(0, (i ?? 0) - 1));
+          } else if (key.rightArrow) {
+            setSelectedAgentIndex((i) => Math.min(maxCardIndex, (i ?? 0) + 1));
+          } else if (key.upArrow) {
+            setSelectedAgentIndex((i) => Math.max(0, (i ?? 0) - CARDS_PER_ROW));
           } else if (key.downArrow) {
             const currentIndex = selectedAgentIndex ?? 0;
-            if (currentIndex >= maxCardIndex) {
-              // At bottom - transition to activity
+            const newIndex = currentIndex + CARDS_PER_ROW;
+            if (newIndex > maxCardIndex) {
+              // Past last row - transition to activity
               setFocusedSection('activity');
               setInteracting(false);
               setSelectedAgentIndex(null);
             } else {
-              setSelectedAgentIndex((i) => Math.min(maxCardIndex, (i ?? 0) + 1));
+              setSelectedAgentIndex(newIndex);
             }
-          } else if (key.rightArrow) {
-            setSelectedAgentIndex((i) => Math.min(maxCardIndex, (i ?? 0) + 1));
           } else if (key.return) {
             if (selectedAgentIndex === MAX_VISIBLE_CARDS && hasOverflow) {
               // Open full agent list
