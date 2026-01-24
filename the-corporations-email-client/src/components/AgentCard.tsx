@@ -30,10 +30,8 @@ export function AgentCard({ agent, selected, depth }: AgentCardProps) {
 
       {/* S:x  R:x  U:x */}
       <Box>
-        <Text dimColor>S:{agent.sentCount} </Text>
-        <Text dimColor>R:{agent.receivedCount} </Text>
-        <Text dimColor>U:</Text>
-        <Text color={agent.unreadCount > 0 ? 'yellow' : 'white'}>
+        <Text dimColor>S:{agent.sentCount} R:{agent.receivedCount} U:</Text>
+        <Text color={agent.unreadCount > 0 ? 'white' : undefined}>
           {agent.unreadCount}
         </Text>
       </Box>
