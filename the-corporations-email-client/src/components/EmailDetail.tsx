@@ -5,8 +5,6 @@ import type { Email } from '../types/email.js';
 interface EmailDetailProps {
   email: Email;
   thread?: Email[];
-  onBack: () => void;
-  onReply: () => void;
 }
 
 function formatDate(timestamp: string): string {
@@ -48,7 +46,7 @@ function getPrefixColor(subject: string): string {
   return 'white';
 }
 
-export function EmailDetail({ email, thread, onBack, onReply }: EmailDetailProps) {
+export function EmailDetail({ email, thread }: EmailDetailProps) {
   const subjectColor = getPrefixColor(email.subject);
 
   return (
@@ -135,15 +133,6 @@ export function EmailDetail({ email, thread, onBack, onReply }: EmailDetailProps
         </Box>
       )}
 
-      {/* Controls */}
-      <Box marginTop={1}>
-        <Text dimColor>[</Text>
-        <Text bold color="cyan">B</Text>
-        <Text dimColor>] Back  </Text>
-        <Text dimColor>[</Text>
-        <Text bold color="green">R</Text>
-        <Text dimColor>] Reply  </Text>
-      </Box>
     </Box>
   );
 }

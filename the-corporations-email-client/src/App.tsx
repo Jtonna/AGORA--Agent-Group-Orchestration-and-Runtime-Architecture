@@ -254,15 +254,6 @@ export function App() {
           <EmailDetail
             email={selectedEmail}
             thread={emailThread}
-            onBack={() => {
-              setView(previousView);
-              setSelectedEmail(null);
-              setEmailThread([]);
-              if (previousView === 'dashboard') {
-                setSelectedAgentIndex(null);
-              }
-            }}
-            onReply={handleReply}
           />
         )}
 
