@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Box, Text, useApp, useInput } from 'ink';
+import { Box, Text, useApp, useInput, useStdoutDimensions } from 'ink';
 import { Dashboard, MAX_VISIBLE_CARDS, type FocusedSection } from './components/Dashboard.js';
+import { CARD_WIDTH } from './components/AgentCard.js';
 import { EmailDetail } from './components/EmailDetail.js';
 import { ComposeModal } from './components/ComposeModal.js';
 import { StatusBar } from './components/StatusBar.js';
@@ -12,6 +13,12 @@ import type { ViewType, Email, NewEmail } from './types/email.js';
 
 export function App() {
   const { exit } = useApp();
+  const [terminalWidth] = useStdoutDimensions();
+
+  // Calculate cards per row based on terminal width
+  const HIERARCHY_WIDTH = 27; // 26 width + 1 margin
+  const availableWidth = terminalWidth - HIERARCHY_WIDTH;
+  const cardsPerRow = Math.max(1, Math.floor(availableWidth / CARD_WIDTH));
   const [view, setView] = useState<ViewType>('dashboard');
   const [selectedAgentIndex, setSelectedAgentIndex] = useState<number | null>(null);
   const [selectedEmailIndex, setSelectedEmailIndex] = useState(0);
@@ -178,16 +185,15 @@ export function App() {
           }
         } else if (focusedSection === 'agents') {
           // Navigate within agent cards (grid layout)
-          const CARDS_PER_ROW = 4;
           if (key.leftArrow) {
             setSelectedAgentIndex((i) => Math.max(0, (i ?? 0) - 1));
           } else if (key.rightArrow) {
             setSelectedAgentIndex((i) => Math.min(maxCardIndex, (i ?? 0) + 1));
           } else if (key.upArrow) {
-            setSelectedAgentIndex((i) => Math.max(0, (i ?? 0) - CARDS_PER_ROW));
+            setSelectedAgentIndex((i) => Math.max(0, (i ?? 0) - cardsPerRow));
           } else if (key.downArrow) {
             const currentIndex = selectedAgentIndex ?? 0;
-            const newIndex = currentIndex + CARDS_PER_ROW;
+            const newIndex = currentIndex + cardsPerRow;
             if (newIndex > maxCardIndex) {
               // Past last row - transition to activity
               setFocusedSection('activity');

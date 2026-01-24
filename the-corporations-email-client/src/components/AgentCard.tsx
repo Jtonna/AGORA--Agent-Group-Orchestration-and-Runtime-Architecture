@@ -9,10 +9,19 @@ interface AgentCardProps {
   depth: number;
 }
 
+// Fixed card width for predictable grid navigation
+export const CARD_WIDTH = 18;
+
 export function AgentCard({ agent, selected, depth }: AgentCardProps) {
   const depthColor = getDepthColor(depth);
   const displayColor = selected ? SELECTION_COLOR : depthColor;
   const borderColor = selected ? INTERACT_BORDER_COLOR : 'gray';
+
+  // Truncate name to fit card width (width - borders - padding = 18 - 2 - 2 = 14)
+  const maxNameLen = 14;
+  const displayName = agent.name.length > maxNameLen
+    ? agent.name.slice(0, maxNameLen - 1) + '…'
+    : agent.name;
 
   return (
     <Box
@@ -20,11 +29,12 @@ export function AgentCard({ agent, selected, depth }: AgentCardProps) {
       borderStyle="single"
       borderColor={borderColor}
       paddingX={1}
+      width={CARD_WIDTH}
     >
       {/* NAME */}
       <Box>
         <Text bold color={displayColor}>
-          {agent.name.toUpperCase()}
+          {displayName.toUpperCase()}
         </Text>
       </Box>
 
@@ -52,6 +62,7 @@ export function MoreCard({ count, selected }: MoreCardProps) {
       borderStyle="single"
       borderColor={selected ? INTERACT_BORDER_COLOR : 'gray'}
       paddingX={1}
+      width={CARD_WIDTH}
     >
       <Box>
         <Text bold color={selected ? SELECTION_COLOR : 'white'}>
