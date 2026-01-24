@@ -1,5 +1,10 @@
 import type { Agent } from '../types/email.js';
 
+// UI State colors
+export const SELECTION_COLOR = 'yellowBright';
+export const HOVER_BORDER_COLOR = 'cyan';
+export const INTERACT_BORDER_COLOR = 'yellowBright';
+
 // Color palette by depth (0 = root/CEO)
 const DEPTH_COLORS: string[] = [
   'blue',          // 0 - CEO/root

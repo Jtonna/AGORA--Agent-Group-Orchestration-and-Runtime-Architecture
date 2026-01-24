@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Box, Text, useApp, useInput } from 'ink';
-import { Dashboard, MAX_VISIBLE_CARDS } from './components/Dashboard.js';
+import { Dashboard, MAX_VISIBLE_CARDS, type FocusedSection } from './components/Dashboard.js';
 import { EmailDetail } from './components/EmailDetail.js';
 import { ComposeModal } from './components/ComposeModal.js';
 import { StatusBar } from './components/StatusBar.js';
@@ -21,8 +21,9 @@ export function App() {
   const [previousView, setPreviousView] = useState<'dashboard' | 'agent-detail'>('dashboard');
   const [replyTo, setReplyTo] = useState<{ from: string; subject: string; id: string } | null>(null);
 
-  // New navigation states
-  const [agentsFocused, setAgentsFocused] = useState(false);
+  // Two-level navigation states
+  const [focusedSection, setFocusedSection] = useState<FocusedSection>('activity');
+  const [interacting, setInteracting] = useState(false);
   const [showAgentList, setShowAgentList] = useState(false);
   const [agentListIndex, setAgentListIndex] = useState(0);
   const [agentListScrollOffset, setAgentListScrollOffset] = useState(0);
@@ -57,7 +58,8 @@ export function App() {
   const handleCancelCompose = useCallback(() => {
     setView('dashboard');
     setSelectedAgentIndex(null);
-    setAgentsFocused(false);
+    setFocusedSection('activity');
+    setInteracting(false);
     setReplyTo(null);
   }, []);
 
@@ -78,7 +80,8 @@ export function App() {
       setSelectedEmailIndex(0);
       setPreviousView('dashboard');
       setView('agent-detail');
-      setAgentsFocused(false);
+      setFocusedSection('activity');
+      setInteracting(false);
       setShowAgentList(false);
     }
   }, [agentStats.length]);
@@ -120,59 +123,123 @@ export function App() {
       return;
     }
 
-    // Dashboard controls
+    // Dashboard controls - Two-level navigation
     if (view === 'dashboard') {
-      // Agent cards focused
-      if (agentsFocused) {
-        if (key.escape) {
-          setAgentsFocused(false);
+      // Global dashboard shortcuts
+      if (input === 'r' || input === 'R') {
+        refresh();
+        return;
+      } else if (input.toLowerCase() === 'c') {
+        setView('compose');
+        return;
+      }
+
+      // Escape: exit interacting mode or go back to activity
+      if (key.escape) {
+        if (interacting) {
+          setInteracting(false);
           setSelectedAgentIndex(null);
-        } else if (key.upArrow || key.downArrow || key.leftArrow || key.rightArrow) {
-          // Navigate in grid (simplified - up/left = prev, down/right = next)
+        } else if (focusedSection !== 'activity') {
+          setFocusedSection('activity');
+        }
+        return;
+      }
+
+      // When interacting within a section
+      if (interacting) {
+        if (focusedSection === 'hierarchy') {
+          // Navigate within hierarchy tree
+          if (key.upArrow) {
+            setSelectedAgentIndex((i) => Math.max(0, (i ?? 0) - 1));
+            // Auto-scroll hierarchy
+            setHierarchyScrollOffset((offset) => {
+              const newIndex = Math.max(0, (selectedAgentIndex ?? 0) - 1);
+              if (newIndex < offset) return newIndex;
+              return offset;
+            });
+          } else if (key.downArrow) {
+            setSelectedAgentIndex((i) => Math.min(agentStats.length - 1, (i ?? 0) + 1));
+            // Auto-scroll hierarchy
+            setHierarchyScrollOffset((offset) => {
+              const newIndex = Math.min(agentStats.length - 1, (selectedAgentIndex ?? 0) + 1);
+              if (newIndex >= offset + 10) return newIndex - 9;
+              return offset;
+            });
+          } else if (key.return && selectedAgentIndex !== null) {
+            openAgentInbox(selectedAgentIndex);
+          }
+        } else if (focusedSection === 'agents') {
+          // Navigate within agent cards
           if (key.upArrow || key.leftArrow) {
             setSelectedAgentIndex((i) => Math.max(0, (i ?? 0) - 1));
-          } else {
+          } else if (key.downArrow || key.rightArrow) {
             setSelectedAgentIndex((i) => Math.min(maxCardIndex, (i ?? 0) + 1));
+          } else if (key.return) {
+            if (selectedAgentIndex === MAX_VISIBLE_CARDS && hasOverflow) {
+              // Open full agent list
+              setShowAgentList(true);
+              setAgentListIndex(0);
+              setAgentListScrollOffset(0);
+            } else if (selectedAgentIndex !== null) {
+              openAgentInbox(selectedAgentIndex);
+            }
           }
-        } else if (key.return) {
-          if (selectedAgentIndex === MAX_VISIBLE_CARDS && hasOverflow) {
-            // Open full agent list
-            setShowAgentList(true);
-            setAgentListIndex(0);
-            setAgentListScrollOffset(0);
-          } else if (selectedAgentIndex !== null) {
-            openAgentInbox(selectedAgentIndex);
+        } else if (focusedSection === 'activity') {
+          // Navigate within activity feed
+          if (key.upArrow) {
+            setSelectedActivityIndex((i) => Math.max(0, i - 1));
+          } else if (key.downArrow) {
+            setSelectedActivityIndex((i) => Math.min(activityFeed.length - 1, i + 1));
+          } else if (key.return && activityFeed[selectedActivityIndex]) {
+            const emailToView = activityFeed[selectedActivityIndex];
+            getEmail(emailToView.id, 'ceo').then((result) => {
+              if (result) {
+                setSelectedEmail(result.email);
+                setEmailThread(result.thread);
+                setPreviousView('dashboard');
+                setView('email-detail');
+              }
+            });
           }
         }
         return;
       }
 
-      // Normal dashboard controls (not focused on agents)
-      if (input === 'r' || input === 'R') {
-        refresh();
-      } else if (input >= '1' && input <= '9') {
-        // Focus agent cards section with number key
-        const agentIndex = parseInt(input, 10) - 1;
-        if (agentIndex <= maxCardIndex) {
-          setSelectedAgentIndex(agentIndex);
-          setAgentsFocused(true);
+      // Hover mode: navigate between sections
+      if (focusedSection === 'activity') {
+        // From activity feed
+        if (key.upArrow) {
+          setFocusedSection('hierarchy');
+        } else if (key.return) {
+          // Enter to start interacting with activity feed
+          setInteracting(true);
         }
-      } else if (input.toLowerCase() === 'c') {
-        setView('compose');
-      } else if (key.upArrow) {
-        setSelectedActivityIndex((i) => Math.max(0, i - 1));
-      } else if (key.downArrow) {
-        setSelectedActivityIndex((i) => Math.min(activityFeed.length - 1, i + 1));
-      } else if (key.return && activityFeed[selectedActivityIndex]) {
-        const emailToView = activityFeed[selectedActivityIndex];
-        getEmail(emailToView.id, 'ceo').then((result) => {
-          if (result) {
-            setSelectedEmail(result.email);
-            setEmailThread(result.thread);
-            setPreviousView('dashboard');
-            setView('email-detail');
+      } else if (focusedSection === 'hierarchy') {
+        // From hierarchy section
+        if (key.rightArrow) {
+          setFocusedSection('agents');
+        } else if (key.downArrow) {
+          setFocusedSection('activity');
+        } else if (key.return) {
+          // Enter to start interacting with hierarchy
+          setInteracting(true);
+          if (selectedAgentIndex === null) {
+            setSelectedAgentIndex(0);
           }
-        });
+        }
+      } else if (focusedSection === 'agents') {
+        // From agents section
+        if (key.leftArrow) {
+          setFocusedSection('hierarchy');
+        } else if (key.downArrow) {
+          setFocusedSection('activity');
+        } else if (key.return) {
+          // Enter to start interacting with agent cards
+          setInteracting(true);
+          if (selectedAgentIndex === null) {
+            setSelectedAgentIndex(0);
+          }
+        }
       }
     }
 
@@ -292,7 +359,8 @@ export function App() {
             selectedAgentIndex={selectedAgentIndex}
             selectedActivityIndex={selectedActivityIndex}
             onSelectAgent={setSelectedAgentIndex}
-            agentsFocused={agentsFocused}
+            focusedSection={focusedSection}
+            interacting={interacting}
             hierarchyScrollOffset={hierarchyScrollOffset}
           />
         )}

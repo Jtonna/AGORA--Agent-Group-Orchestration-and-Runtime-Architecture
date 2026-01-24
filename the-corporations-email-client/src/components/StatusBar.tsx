@@ -15,14 +15,14 @@ function getViewControls(view: ViewType): React.ReactNode {
       return (
         <>
           <Text dimColor>[</Text>
-          <Text bold>↑/↓</Text>
+          <Text bold>Arrows</Text>
           <Text dimColor>] Navigate  </Text>
           <Text dimColor>[</Text>
           <Text bold color="green">Enter</Text>
-          <Text dimColor>] View  </Text>
+          <Text dimColor>] Select  </Text>
           <Text dimColor>[</Text>
-          <Text bold>1-4</Text>
-          <Text dimColor>] Agent  </Text>
+          <Text bold>Esc</Text>
+          <Text dimColor>] Back  </Text>
           <Text dimColor>[</Text>
           <Text bold color="cyan">C</Text>
           <Text dimColor>] Compose  </Text>

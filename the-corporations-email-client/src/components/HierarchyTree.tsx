@@ -1,13 +1,15 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import type { AgentStats } from '../types/email.js';
-import { getDepthColor } from '../utils/hierarchyColors.js';
+import { getDepthColor, SELECTION_COLOR, HOVER_BORDER_COLOR, INTERACT_BORDER_COLOR } from '../utils/hierarchyColors.js';
 
 interface HierarchyTreeProps {
   agents: AgentStats[];
   selectedIndex: number | null;
   maxLines?: number;
   scrollOffset?: number;
+  focused?: boolean;
+  interacting?: boolean;
 }
 
 interface TreeNode {
@@ -29,7 +31,6 @@ interface FlatLine {
 function buildTree(agents: AgentStats[]): TreeNode[] {
   const nodeMap = new Map<string, TreeNode>();
 
-  // Create TreeNode for each agent with depth 0 initially
   agents.forEach((agent, index) => {
     nodeMap.set(agent.name.toLowerCase(), {
       agent,
@@ -39,7 +40,6 @@ function buildTree(agents: AgentStats[]): TreeNode[] {
     });
   });
 
-  // Build parent-child relationships
   const roots: TreeNode[] = [];
   agents.forEach((agent) => {
     const node = nodeMap.get(agent.name.toLowerCase())!;
@@ -52,7 +52,6 @@ function buildTree(agents: AgentStats[]): TreeNode[] {
     }
   });
 
-  // Calculate depths recursively
   function setDepths(node: TreeNode, depth: number) {
     node.depth = depth;
     node.children.forEach((child) => setDepths(child, depth + 1));
@@ -98,38 +97,63 @@ export function HierarchyTree({
   selectedIndex,
   maxLines = 10,
   scrollOffset = 0,
+  focused = false,
+  interacting = false,
 }: HierarchyTreeProps) {
   const roots = buildTree(agents);
   const allLines = flattenTree(roots, selectedIndex);
 
-  // Apply truncation
   const visibleLines = allLines.slice(scrollOffset, scrollOffset + maxLines);
   const hasMore = allLines.length > scrollOffset + maxLines;
   const hasScrolledPast = scrollOffset > 0;
 
+  // Determine border color based on state
+  const borderColor = interacting
+    ? INTERACT_BORDER_COLOR
+    : focused
+    ? HOVER_BORDER_COLOR
+    : 'gray';
+
   return (
-    <Box flexDirection="column">
+    <Box
+      flexDirection="column"
+      borderStyle={focused || interacting ? 'single' : undefined}
+      borderColor={borderColor}
+      paddingX={focused || interacting ? 1 : 0}
+    >
       <Text bold dimColor>HIERARCHY</Text>
       <Box flexDirection="column" marginTop={1}>
         {hasScrolledPast && (
-          <Text dimColor>  ...</Text>
+          <Text dimColor>  ↑ more</Text>
         )}
-        {visibleLines.map((line, i) => (
-          <Box key={`${line.name}-${i}`}>
-            <Text dimColor>{line.prefix}{line.connector}</Text>
-            <Text color={line.isSelected ? 'cyan' : getDepthColor(line.depth)}>o </Text>
-            <Text bold={line.isSelected} color={line.isSelected ? 'cyan' : getDepthColor(line.depth)}>
-              {line.name}
-            </Text>
-          </Box>
-        ))}
+        {visibleLines.map((line, i) => {
+          const isSelected = line.isSelected && interacting;
+          const color = isSelected ? SELECTION_COLOR : getDepthColor(line.depth);
+
+          return (
+            <Box key={`${line.name}-${i}`}>
+              <Text dimColor>{line.prefix}{line.connector}</Text>
+              <Text color={color}>o </Text>
+              <Text bold={isSelected} color={color}>
+                {line.name}
+              </Text>
+            </Box>
+          );
+        })}
         {hasMore && (
-          <Text dimColor>  ...</Text>
+          <Text dimColor>  ↓ more</Text>
         )}
       </Box>
     </Box>
   );
 }
 
-// Export for use in Dashboard to get depths
+// Export for finding agent position in tree
+export function getAgentTreePosition(agents: AgentStats[], agentIndex: number): number {
+  const roots = buildTree(agents);
+  const allLines = flattenTree(roots, null);
+  const lineIndex = allLines.findIndex((line) => line.index === agentIndex);
+  return lineIndex >= 0 ? lineIndex : 0;
+}
+
 export { buildTree };

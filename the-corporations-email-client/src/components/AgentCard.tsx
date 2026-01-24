@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import type { AgentStats } from '../types/email.js';
-import { getDepthColor } from '../utils/hierarchyColors.js';
+import { getDepthColor, SELECTION_COLOR, INTERACT_BORDER_COLOR } from '../utils/hierarchyColors.js';
 
 interface AgentCardProps {
   agent: AgentStats;
@@ -12,20 +12,22 @@ interface AgentCardProps {
 
 export function AgentCard({ agent, selected, index, depth }: AgentCardProps) {
   const depthColor = getDepthColor(depth);
+  const displayColor = selected ? SELECTION_COLOR : depthColor;
+  const borderColor = selected ? INTERACT_BORDER_COLOR : 'gray';
 
   return (
     <Box
       flexDirection="column"
       borderStyle="single"
-      borderColor={selected ? 'cyan' : 'gray'}
+      borderColor={borderColor}
       paddingX={1}
     >
       {/* [n] NAME */}
       <Box>
         <Text dimColor>[</Text>
-        <Text bold color={selected ? 'cyan' : depthColor}>{index + 1}</Text>
+        <Text bold color={displayColor}>{index + 1}</Text>
         <Text dimColor>] </Text>
-        <Text bold color={selected ? 'cyan' : depthColor}>
+        <Text bold color={displayColor}>
           {agent.name.toUpperCase()}
         </Text>
       </Box>
@@ -58,11 +60,11 @@ export function MoreCard({ count, selected }: MoreCardProps) {
     <Box
       flexDirection="column"
       borderStyle="single"
-      borderColor={selected ? 'cyan' : 'gray'}
+      borderColor={selected ? INTERACT_BORDER_COLOR : 'gray'}
       paddingX={1}
     >
       <Box>
-        <Text bold color={selected ? 'cyan' : 'white'}>
+        <Text bold color={selected ? SELECTION_COLOR : 'white'}>
           + {count} more
         </Text>
       </Box>

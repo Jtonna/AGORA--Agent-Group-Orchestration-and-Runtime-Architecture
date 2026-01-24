@@ -4,7 +4,9 @@ import { AgentCard, MoreCard } from './AgentCard.js';
 import { HierarchyTree } from './HierarchyTree.js';
 import { ActivityFeed } from './ActivityFeed.js';
 import type { AgentStats, Email } from '../types/email.js';
-import { calculateAllDepths } from '../utils/hierarchyColors.js';
+import { calculateAllDepths, HOVER_BORDER_COLOR, INTERACT_BORDER_COLOR } from '../utils/hierarchyColors.js';
+
+type FocusedSection = 'activity' | 'hierarchy' | 'agents';
 
 interface DashboardProps {
   agentStats: AgentStats[];
@@ -12,7 +14,8 @@ interface DashboardProps {
   selectedAgentIndex: number | null;
   selectedActivityIndex: number;
   onSelectAgent: (index: number) => void;
-  agentsFocused?: boolean;
+  focusedSection: FocusedSection;
+  interacting: boolean;
   hierarchyScrollOffset?: number;
 }
 
@@ -25,7 +28,8 @@ export function Dashboard({
   selectedAgentIndex,
   selectedActivityIndex,
   onSelectAgent,
-  agentsFocused = false,
+  focusedSection,
+  interacting,
   hierarchyScrollOffset = 0,
 }: DashboardProps) {
   // Calculate depths for all agents
@@ -41,29 +45,47 @@ export function Dashboard({
   // Check if "+ more" card is selected
   const isMoreCardSelected = selectedAgentIndex === MAX_VISIBLE_CARDS && hasOverflow;
 
+  // Focus states for each section
+  const hierarchyFocused = focusedSection === 'hierarchy';
+  const hierarchyInteracting = hierarchyFocused && interacting;
+  const agentsFocused = focusedSection === 'agents';
+  const agentsInteracting = agentsFocused && interacting;
+
+  // Border color for agents section
+  const agentsBorderColor = agentsInteracting
+    ? INTERACT_BORDER_COLOR
+    : agentsFocused
+    ? HOVER_BORDER_COLOR
+    : 'gray';
+
   return (
     <Box flexDirection="column" flexGrow={1}>
       {/* Split View: Hierarchy + Agent Cards */}
       <Box marginBottom={1}>
         {/* Left: Hierarchy Tree */}
-        <Box width={24} marginRight={2}>
+        <Box width={26} marginRight={1}>
           <HierarchyTree
             agents={agentStats}
             selectedIndex={selectedAgentIndex}
             maxLines={10}
             scrollOffset={hierarchyScrollOffset}
+            focused={hierarchyFocused}
+            interacting={hierarchyInteracting}
           />
         </Box>
 
-        {/* Right: Agent Cards with Legend */}
-        <Box flexDirection="column" flexGrow={1}>
+        {/* Right: Agent Cards */}
+        <Box
+          flexDirection="column"
+          flexGrow={1}
+          borderStyle={agentsFocused ? 'single' : undefined}
+          borderColor={agentsBorderColor}
+          paddingX={agentsFocused ? 1 : 0}
+        >
           {/* Legend */}
           <Box marginBottom={1}>
             <Text bold dimColor>AGENTS  </Text>
             <Text dimColor>S=Sent  R=Received  U=Unread</Text>
-            {agentsFocused && (
-              <Text color="cyan">  [↑↓←→] Navigate  [Enter] Open  [Esc] Back</Text>
-            )}
           </Box>
 
           {/* Agent Cards Grid */}
@@ -74,13 +96,13 @@ export function Dashboard({
                 agent={agent}
                 index={index}
                 depth={depths.get(agent.name.toLowerCase()) || 0}
-                selected={agentsFocused && selectedAgentIndex === index}
+                selected={agentsInteracting && selectedAgentIndex === index}
               />
             ))}
             {hasOverflow && (
               <MoreCard
                 count={overflowCount}
-                selected={agentsFocused && isMoreCardSelected}
+                selected={agentsInteracting && isMoreCardSelected}
               />
             )}
           </Box>
@@ -98,7 +120,12 @@ export function Dashboard({
         paddingTop={1}
         flexGrow={1}
       >
-        <ActivityFeed emails={activityFeed} maxItems={15} selectedIndex={selectedActivityIndex} />
+        <ActivityFeed
+          emails={activityFeed}
+          maxItems={15}
+          selectedIndex={selectedActivityIndex}
+          focused={focusedSection === 'activity'}
+        />
       </Box>
     </Box>
   );
@@ -106,3 +133,4 @@ export function Dashboard({
 
 // Re-export for App to use
 export { MAX_VISIBLE_CARDS };
+export type { FocusedSection };

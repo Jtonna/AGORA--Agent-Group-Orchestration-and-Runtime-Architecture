@@ -1,12 +1,14 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import type { Email } from '../types/email.js';
+import { HOVER_BORDER_COLOR } from '../utils/hierarchyColors.js';
 
 interface ActivityFeedProps {
   emails: Email[];
   maxItems?: number;
   onSelectEmail?: (email: Email) => void;
   selectedIndex?: number;
+  focused?: boolean;
 }
 
 function getPrefixColor(subject: string): string {
@@ -66,11 +68,17 @@ export function ActivityFeed({
   maxItems = 15,
   onSelectEmail,
   selectedIndex,
+  focused = false,
 }: ActivityFeedProps) {
   const displayedEmails = emails.slice(0, maxItems);
 
   return (
     <Box flexDirection="column" flexGrow={1}>
+      <Box marginBottom={1}>
+        <Text bold dimColor={!focused} color={focused ? HOVER_BORDER_COLOR : undefined}>
+          ACTIVITY FEED
+        </Text>
+      </Box>
       {displayedEmails.length === 0 ? (
         <Text dimColor>(No recent activity)</Text>
       ) : (
