@@ -9,9 +9,14 @@ import { AgentListView } from './components/AgentListView.js';
 import { useMailbox, useAgentInbox } from './hooks/useMailbox.js';
 import { getEmail } from './api/mailbox.js';
 import { calculateAllDepths } from './utils/hierarchyColors.js';
+import { loadSettings, saveSettings } from './utils/settings.js';
 import type { ViewType, Email, NewEmail } from './types/email.js';
 
-export function App() {
+interface AppProps {
+  subjectPrefixes: string[];
+}
+
+export function App({ subjectPrefixes }: AppProps) {
   const { exit } = useApp();
   const { stdout } = useStdout();
 
@@ -37,6 +42,17 @@ export function App() {
   const [agentListScrollOffset, setAgentListScrollOffset] = useState(0);
   const [hierarchyScrollOffset, setHierarchyScrollOffset] = useState(0);
 
+  // Settings - load from disk on startup
+  const [soundEnabled, setSoundEnabled] = useState(() => loadSettings().soundEnabled);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled(prev => {
+      const newValue = !prev;
+      saveSettings({ soundEnabled: newValue });
+      return newValue;
+    });
+  }, []);
+
   const {
     apiConnected,
     agents,
@@ -46,7 +62,7 @@ export function App() {
     lastRefresh,
     refresh,
     sendEmail,
-  } = useMailbox();
+  } = useMailbox(soundEnabled);
 
   const selectedAgentName = selectedAgentIndex !== null ? agents[selectedAgentIndex]?.name : null;
   const { inbox: agentInbox, refresh: refreshAgentInbox } = useAgentInbox(selectedAgentName);
@@ -139,6 +155,9 @@ export function App() {
         return;
       } else if (input.toLowerCase() === 'c') {
         setView('compose');
+        return;
+      } else if (input.toLowerCase() === 's') {
+        toggleSound();
         return;
       }
 
@@ -370,6 +389,7 @@ export function App() {
           apiConnected={false}
           lastRefresh={lastRefresh}
           loading={loading}
+          soundEnabled={soundEnabled}
         />
       </Box>
     );
@@ -477,6 +497,8 @@ export function App() {
               onCancel={handleCancelCompose}
               replyTo={replyTo || undefined}
               agents={agents}
+              agentStats={agentStats}
+              subjectPrefixes={subjectPrefixes}
             />
           </Box>
         )}
@@ -487,6 +509,7 @@ export function App() {
         apiConnected={apiConnected}
         lastRefresh={lastRefresh}
         loading={loading}
+        soundEnabled={soundEnabled}
       />
     </Box>
   );

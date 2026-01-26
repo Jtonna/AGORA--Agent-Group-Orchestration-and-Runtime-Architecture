@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getInbox, checkHealth, sendEmail as apiSendEmail, getAgents } from '../api/mailbox.js';
 import type { Email, AgentStats, AgentStatus, NewEmail, Agent } from '../types/email.js';
 import { CEO_AGENT } from '../types/email.js';
+import { playNotificationSound } from '../utils/sound.js';
 
 function determineStatus(latestSubject?: string): AgentStatus {
   if (!latestSubject) return 'unknown';
@@ -19,13 +20,18 @@ function determineStatus(latestSubject?: string): AgentStatus {
   return 'waiting';
 }
 
-export function useMailbox() {
+export function useMailbox(soundEnabled: boolean = true) {
   const [apiConnected, setApiConnected] = useState(false);
   const [agents, setAgents] = useState<Agent[]>([CEO_AGENT]);
   const [agentStats, setAgentStats] = useState<AgentStats[]>([]);
   const [activityFeed, setActivityFeed] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const prevCeoUnreadIds = useRef<Set<string>>(new Set());
+  const isFirstLoad = useRef(true);
+  // Use ref to avoid recreating refresh callback when sound toggled
+  const soundEnabledRef = useRef(soundEnabled);
+  soundEnabledRef.current = soundEnabled;
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -48,6 +54,7 @@ export function useMailbox() {
 
     const stats: AgentStats[] = [];
     let allEmails: Email[] = [];
+    let ceoUnreadIds = new Set<string>();
 
     for (const agent of allAgents) {
       const allMail = await getInbox(agent.name);
@@ -57,6 +64,11 @@ export function useMailbox() {
       );
       const unread = received.filter((e) => !e.read);
       const latestReceived = received[0]?.subject;
+
+      // Track CEO's unread email IDs for sound notification
+      if (agent.name.toLowerCase() === 'ceo') {
+        ceoUnreadIds = new Set(unread.map((e) => e.id));
+      }
 
       stats.push({
         name: agent.name,
@@ -72,6 +84,17 @@ export function useMailbox() {
     }
 
     setAgentStats(stats);
+
+    // Check if CEO has new unread emails by comparing IDs
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+    } else if (soundEnabledRef.current) {
+      const hasNewUnread = [...ceoUnreadIds].some((id) => !prevCeoUnreadIds.current.has(id));
+      if (hasNewUnread) {
+        playNotificationSound();
+      }
+    }
+    prevCeoUnreadIds.current = ceoUnreadIds;
 
     // Sort by timestamp descending and dedupe by id
     const seen = new Set<string>();

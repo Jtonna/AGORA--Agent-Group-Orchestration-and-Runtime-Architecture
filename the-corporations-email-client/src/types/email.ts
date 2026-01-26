@@ -53,17 +53,3 @@ export interface AppState {
 // CEO is a static entry - always shown first, not a registered backend agent
 export const CEO_AGENT: Agent = { name: 'ceo', supervisor: null };
 
-export const SUBJECT_PREFIXES = [
-  'GETTING STARTED:',
-  'IMPORTANT:',
-  'PROGRESS:',
-  'COMPLETE:',
-  'BLOCKED:',
-  'QUESTION:',
-  'APPROVED:',
-  'REVISION:',
-  'ACKNOWLEDGED:',
-  'COLLABORATION:',
-] as const;
-
-export type SubjectPrefix = typeof SUBJECT_PREFIXES[number];

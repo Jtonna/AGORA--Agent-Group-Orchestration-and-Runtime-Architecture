@@ -7,6 +7,7 @@ interface StatusBarProps {
   apiConnected: boolean;
   lastRefresh: Date | null;
   loading?: boolean;
+  soundEnabled?: boolean;
 }
 
 function getViewControls(view: ViewType): React.ReactNode {
@@ -97,7 +98,7 @@ function formatTime(date: Date | null): string {
   });
 }
 
-export function StatusBar({ view, apiConnected, lastRefresh, loading }: StatusBarProps) {
+export function StatusBar({ view, apiConnected, lastRefresh, loading, soundEnabled = true }: StatusBarProps) {
   return (
     <Box
       borderStyle="single"
@@ -108,7 +109,18 @@ export function StatusBar({ view, apiConnected, lastRefresh, loading }: StatusBa
       justifyContent="space-between"
       paddingX={1}
     >
-      <Box>{getViewControls(view)}</Box>
+      <Box>
+        {getViewControls(view)}
+        {view === 'dashboard' && (
+          <>
+            <Text>  </Text>
+            <Text dimColor>[</Text>
+            <Text bold color="yellow">S</Text>
+            <Text dimColor>] Sound: </Text>
+            <Text color={soundEnabled ? 'green' : 'gray'}>{soundEnabled ? 'ON' : 'OFF'}</Text>
+          </>
+        )}
+      </Box>
 
       <Box>
         {loading && (

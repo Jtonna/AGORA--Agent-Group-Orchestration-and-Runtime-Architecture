@@ -9,7 +9,12 @@
       "Bash(curl:*)",
       "Bash(npx tsc:*)",
       "Bash(grep:*)",
-      "Bash(npm show:*)"
+      "Bash(npm show:*)",
+      "Bash(node -e:*)",
+      "Bash(node --input-type=module -e:*)",
+      "Bash(node node_modules/typescript/bin/tsc:*)",
+      "Bash(ffprobe:*)",
+      "Bash(dir:*)"
     ]
   }
 }
