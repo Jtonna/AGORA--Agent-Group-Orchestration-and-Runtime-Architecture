@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<agent version="3">
+
+  <!-- ===== IDENTITY ===== -->
+  <identity>
+    <name>{agent_name}</name>
+    <supervisor>{supervisor}</supervisor>
+    <note>Your supervisor is ceo by default, unless a different agent sends you a GETTING STARTED email.</note>
+  </identity>
+
+  <!-- ===== TASKS ===== -->
+  <tasks>
+    <about>
+      This is your bootstrap configuration. Complete these tasks in order, then enter the startup lifecycle phase.
+    </about>
+
+    <task order="1" section="mail">
+      <action>Understand the mail system</action>
+      <notes>
+        DO NOT read mail.xml yet - just understand that mail exists from these notes.
+        Mail is core infrastructure - it is always available to you.
+        Every lifecycle phase involves communication. All help requests are blocking.
+        COMPLETE goes to supervisor only. COLLABORATION REQUEST is peer-to-peer only.
+      </notes>
+    </task>
+
+    <task order="2" section="lifecycle">
+      <action>Understand the lifecycle phases</action>
+      <notes>
+        Follow each phase in sequence starting with startup.
+        Fixed phases cannot be modified. Runtime is where your behaviors execute.
+      </notes>
+    </task>
+
+    <task order="3" section="behaviors">
+      <action>Review the behavior catalog</action>
+      <requirements>
+        <requirement>Read only the behavior name, description, and when criteria.</requirement>
+        <requirement>DO NOT read the behavior file yet.</requirement>
+        <requirement>You will select and load behaviors during startup after receiving your task and planning your approach.</requirement>
+        <requirement>You can use multiple behaviors simultaneously - you decide how they work together.</requirement>
+        <requirement>New behaviors can be added mid-execution via mail instructions from your supervisor.</requirement>
+      </requirements>
+    </task>
+  </tasks>
+
+  <!-- ===== MAIL ===== -->
+  <mail file="mail.xml"/>
+
+  <!-- ===== LIFECYCLE ===== -->
+  <lifecycle>
+    <about>Agent execution phases. Two are fixed, one is modifiable.</about>
+    <entry>startup</entry>
+
+    <phase name="startup" file="lifecycle/startup.xml" fixed="true">
+      Initialization and task receipt
+    </phase>
+    <phase name="runtime" file="lifecycle/runtime.xml" fixed="false">
+      Active work execution - behaviors inject here
+    </phase>
+    <phase name="shutdown" file="lifecycle/shutdown.xml" fixed="true">
+      Completion and cleanup
+    </phase>
+  </lifecycle>
+
+  <!-- ===== BEHAVIORS ===== -->
+  <behaviors>
+    <about>Composable capabilities used during the runtime lifecycle phase.</about>
+
+    <behavior name="code-writer" file="behaviors/code-writer.xml">
+      <description>Write, edit, implement code</description>
+      <when>Task involves implementation</when>
+    </behavior>
+
+    <behavior name="collaboration" file="behaviors/collaboration.xml">
+      <description>Coordinate with peer agents</description>
+      <when>Working with others on related work</when>
+    </behavior>
+
+    <behavior name="delegation" file="behaviors/delegation.xml">
+      <description>Assign work, track reports</description>
+      <when>Task complexity exceeds what one agent should handle</when>
+    </behavior>
+
+    <behavior name="review" file="behaviors/review.xml">
+      <description>Evaluate work quality</description>
+      <when>Receives completed work from others</when>
+    </behavior>
+
+    <behavior name="planning" file="behaviors/planning.xml">
+      <description>Break down complex tasks</description>
+      <when>Task is non-trivial or has multiple steps</when>
+    </behavior>
+  </behaviors>
+
+</agent>
