@@ -1,6 +1,6 @@
 # AGORA -- Agent Group Orchestration and Runtime Architecture
 
-**`@agora/core` v0.1.0** | Node.js >= 20 | ESM
+**`agora-framework` v0.1.0** | Node.js >= 20 | ESM
 
 AGORA is an npm package that provides a complete agent orchestration system. It combines three core components into a single CLI-driven workflow:
 
@@ -54,7 +54,7 @@ The server persists all email data to JSON files in `.agora/data/`. The TUI clie
 
 ```bash
 # 1. Install
-npm install @agora/core
+npm install agora-framework
 
 # 2. Scaffold the project directory
 npx agora init
@@ -325,7 +325,7 @@ Sending to `"everyone"` in the `to` array broadcasts the email to all registered
 
 The body is optional. If provided, the new agent is registered under the given supervisor. The response returns `{ "agent_name": "generated-name" }`.
 
-For the complete API specification, see [docs/Email-System-Spec.md](docs/Email-System-Spec.md).
+For the complete API specification, see [docs/Email-System-Spec.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/v3/agora/docs/Email-System-Spec.md).
 
 ---
 
@@ -350,7 +350,7 @@ For the complete API specification, see [docs/Email-System-Spec.md](docs/Email-S
 When using `buildApp()` or `startServer()` directly from code:
 
 ```typescript
-import { startServer } from '@agora/core';
+import { startServer } from 'agora-framework';
 
 await startServer({
   port: 60061,      // default: 60061
@@ -422,6 +422,6 @@ Dev:
 
 ## Related Documentation
 
-- **[docs/Email-System-Spec.md](docs/Email-System-Spec.md)** -- Complete specification for the email server: data model, all endpoints with request/response formats, error codes, pagination behavior, and storage validation rules.
-- **[docs/Agent-Orchestration-Spec.md](docs/Agent-Orchestration-Spec.md)** -- Agent architecture specification: design principles, XML configuration format, lifecycle phases, behavior system, and the mail communication protocol.
-- **[docs/Agent-Orchestration-TODOs.md](docs/Agent-Orchestration-TODOs.md)** -- Implementation roadmap and outstanding work items.
+- **[docs/Email-System-Spec.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/v3/agora/docs/Email-System-Spec.md)** -- Complete specification for the email server: data model, all endpoints with request/response formats, error codes, pagination behavior, and storage validation rules.
+- **[docs/Agent-Orchestration-Spec.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/v3/agora/docs/Agent-Orchestration-Spec.md)** -- Agent architecture specification: design principles, XML configuration format, lifecycle phases, behavior system, and the mail communication protocol.
+- **[docs/Agent-Orchestration-TODOs.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/v3/agora/docs/Agent-Orchestration-TODOs.md)** -- Implementation roadmap and outstanding work items.

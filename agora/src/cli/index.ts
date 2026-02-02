@@ -5,13 +5,17 @@ import { startCommand } from './commands/start.js';
 import { stopCommand } from './commands/stop.js';
 import { statusCommand } from './commands/status.js';
 import { mailCommand } from './commands/mail.js';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const pkg = require('../../package.json');
 
 const program = new Command();
 
 program
   .name('agora')
   .description('AGORA - Agent Group Orchestration and Runtime Architecture')
-  .version('0.1.0');
+  .version(pkg.version);
 
 program
   .command('init')

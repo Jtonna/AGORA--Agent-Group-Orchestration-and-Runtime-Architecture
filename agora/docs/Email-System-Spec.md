@@ -2,9 +2,9 @@
 
 ## Overview
 
-A Python Flask application providing an internal email system for "The Corporations". Simple REST API for sending, retrieving, and managing emails with support for threaded conversations.
+A Node.js Fastify application providing an internal email system for agent orchestration. Simple REST API for sending, retrieving, and managing emails with support for threaded conversations.
 
-**Project Name**: `the-corporations-email`
+**Package**: `agora-framework`
 
 ---
 
@@ -528,63 +528,46 @@ Get all emails involving a person, **including emails deleted by anyone**. For a
 ## Project Structure
 
 ```
-the-corporations-email/
-├── app.py              # Flask routes
-├── models.py           # Email model and validation
-├── services.py         # Business logic layer
-├── storage.py          # JSON file operations
-├── errors.py           # Error codes and helpers
-├── Pipfile             # Pipenv dependencies
-├── Pipfile.lock        # Locked dependencies
-├── data/
-│   ├── emails.json     # Email data storage
-│   └── quarantine.json # Invalid emails moved here on startup
-├── tests/
-│   ├── __init__.py
-│   ├── conftest.py     # Shared fixtures
-│   ├── unit/
-│   │   ├── __init__.py
-│   │   ├── test_models.py
-│   │   ├── test_storage.py
-│   │   └── test_services.py
-│   └── integration/
-│       ├── __init__.py
-│       ├── test_endpoints.py
-│       ├── test_pagination.py
-│       └── test_thread_chains.py
-├── bruno/
-│   └── the-corporations-email/
-│       ├── bruno.json
-│       ├── environments/
-│       │   └── local.bru
-│       ├── health.bru
-│       ├── mail/
-│       │   ├── get-inbox.bru
-│       │   ├── get-email.bru
-│       │   ├── send-email.bru
-│       │   └── delete-email.bru
-│       └── investigation/
-│           └── get-investigation.bru
-└── README.md           # Setup and usage instructions
+agora/src/server/
+├── app.ts              # Fastify app factory and server startup
+├── models.ts           # Email model and validation
+├── services.ts         # Business logic layer
+├── storage.ts          # JSON file persistence (singleton)
+├── errors.ts           # Error codes and helpers
+├── routes/
+│   ├── health.ts       # GET /health
+│   ├── mail.ts         # GET /mail, POST /mail
+│   ├── mailDetail.ts   # GET /mail/:mailId, DELETE /mail/:mailId
+│   ├── investigation.ts# GET /investigation/:name
+│   └── agents.ts       # GET /directory/agents, POST /agents/spawn
+├── middleware/
+│   ├── transactionId.ts# Request ID injection
+│   ├── logging.ts      # Request/response logging
+│   └── validation.ts   # Query param and body validation
+agora/tests/
+├── unit/
+│   └── models.test.ts  # Email model unit tests
+└── integration/
+    └── endpoints.test.ts # Full API endpoint tests
 ```
 
 ---
 
 ## Dependencies
 
-Managed with **pipenv** (`Pipfile` / `Pipfile.lock`)
+Managed with **npm** (`package.json`)
 
 **Production:**
-- flask
-- flask-cors
+- fastify
+- @fastify/cors
+- uuid
+- unique-names-generator
 
 **Development:**
-- pytest
-
-**Standard Library (no install needed):**
-- uuid
-- datetime
-- json
+- typescript
+- vitest
+- @types/node
+- @types/uuid
 
 ---
 
@@ -663,12 +646,9 @@ Location: `tests/integration/`
 | `test_pagination.py` | Pagination across all list endpoints |
 | `test_thread_chains.py` | Complex thread scenarios with replies and deletions |
 
-### Bruno Collection
-Location: `bruno/the-corporations-email/`
+### API Testing
 
-- Organized by endpoint (`mail/`, `investigation/`)
-- Environment variables for base URL and port
-- Example requests for all endpoints and error cases
+The integration test suite (`tests/integration/endpoints.test.ts`) exercises all endpoints using Fastify's `.inject()` method with temporary data directories. Tests cover the full request/response cycle including error cases and pagination.
 
 ---
 

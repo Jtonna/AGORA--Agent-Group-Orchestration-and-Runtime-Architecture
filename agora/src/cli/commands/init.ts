@@ -12,12 +12,8 @@ export async function initCommand(options: { force?: boolean }): Promise<void> {
 
   // Find scaffold directory relative to this module
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const scaffoldDir = path.resolve(__dirname, '..', '..', 'scaffold');
-  // In dist: dist/cli/commands/ -> dist/scaffold/
-  // Fallback to src location
-  const scaffoldSource = fs.existsSync(scaffoldDir)
-    ? scaffoldDir
-    : path.resolve(__dirname, '..', '..', '..', 'src', 'scaffold');
+  // dist/cli/commands/ → up 3 levels → package root → scaffold/
+  const scaffoldSource = path.resolve(__dirname, '..', '..', '..', 'scaffold');
 
   if (!fs.existsSync(scaffoldSource)) {
     console.error('Could not find scaffold templates. Package may be corrupted.');

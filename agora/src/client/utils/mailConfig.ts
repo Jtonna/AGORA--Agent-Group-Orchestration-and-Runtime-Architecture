@@ -52,8 +52,6 @@ export function loadMailConfig(): MailConfig {
   const possiblePaths = [
     process.env.MAIL_XML_PATH,
     resolve(process.cwd(), '.agora', 'agents', 'mail.xml'),
-    resolve(process.cwd(), '../agent orchestration/agents/v3/mail.xml'),
-    resolve(process.cwd(), 'agent orchestration/agents/v3/mail.xml'),
   ].filter((p): p is string => Boolean(p));
 
   for (const xmlPath of possiblePaths) {
