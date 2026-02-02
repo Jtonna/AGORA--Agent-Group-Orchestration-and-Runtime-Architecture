@@ -1,6 +1,6 @@
 # AGORA -- Agent Group Orchestration and Runtime Architecture
 
-**`agora-framework` v0.1.0** | Node.js >= 20 | ESM
+**`agora-framework`** | Node.js >= 20 | ESM
 
 AGORA is an npm package that provides a complete agent orchestration system. It combines three core components into a single CLI-driven workflow:
 
@@ -156,22 +156,25 @@ agora/
 │   │       ├── mailConfig.ts   # Parse mail.xml for email type prefixes
 │   │       ├── hierarchyColors.ts # Color assignment by hierarchy depth
 │   │       ├── settings.ts     # Persistent user settings (sound, etc.)
-│   │       └── sound.ts        # Terminal bell notifications
+│   │       └── sound.ts        # Notification sound playback
 │   │
-│   └── scaffold/               # Template files copied by `agora init`
-│       ├── config.json         # Default configuration (port, dataDir)
-│       ├── agents/
-│       │   ├── agent.xml       # Root agent configuration template
-│       │   ├── mail.xml        # Email type definitions and protocols
-│       │   ├── lifecycle/
-│       │   │   └── startup.xml # Startup phase instructions
-│       │   └── behaviors/
-│       │       └── delegation.xml # Delegation behavior definition
-│       └── scripts/
-│           ├── check-mail.sh   # Shell script: check inbox via curl
-│           ├── check-mail.ps1  # PowerShell: check inbox
-│           ├── send-mail.sh    # Shell script: send email via curl
-│           └── send-mail.ps1   # PowerShell: send email
+│
+├── scaffold/                   # Template files copied by `agora init`
+│   ├── config.json             # Default configuration (port, dataDir)
+│   ├── agents/
+│   │   ├── agent.xml           # Root agent configuration template
+│   │   ├── mail.xml            # Email type definitions and protocols
+│   │   ├── lifecycle/
+│   │   │   └── startup.xml     # Startup phase instructions
+│   │   └── behaviors/
+│   │       └── delegation.xml  # Delegation behavior definition
+│   └── scripts/
+│       ├── check-mail.sh       # Shell script: check inbox via curl
+│       ├── check-mail.ps1      # PowerShell: check inbox
+│       ├── send-mail.sh        # Shell script: send email via curl
+│       └── send-mail.ps1       # PowerShell: send email
+├── assets/
+│   └── notification.mp3        # Email notification sound
 │
 ├── tests/
 │   ├── unit/
@@ -325,7 +328,7 @@ Sending to `"everyone"` in the `to` array broadcasts the email to all registered
 
 The body is optional. If provided, the new agent is registered under the given supervisor. The response returns `{ "agent_name": "generated-name" }`.
 
-For the complete API specification, see [docs/Email-System-Spec.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/v3/agora/docs/Email-System-Spec.md).
+For the complete API specification, see [docs/Email-System-Spec.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/main/agora/docs/Email-System-Spec.md).
 
 ---
 
@@ -422,6 +425,7 @@ Dev:
 
 ## Related Documentation
 
-- **[docs/Email-System-Spec.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/v3/agora/docs/Email-System-Spec.md)** -- Complete specification for the email server: data model, all endpoints with request/response formats, error codes, pagination behavior, and storage validation rules.
-- **[docs/Agent-Orchestration-Spec.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/v3/agora/docs/Agent-Orchestration-Spec.md)** -- Agent architecture specification: design principles, XML configuration format, lifecycle phases, behavior system, and the mail communication protocol.
-- **[docs/Agent-Orchestration-TODOs.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/v3/agora/docs/Agent-Orchestration-TODOs.md)** -- Implementation roadmap and outstanding work items.
+- **[docs/Email-System-Spec.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/main/agora/docs/Email-System-Spec.md)** -- Complete specification for the email server: data model, all endpoints with request/response formats, error codes, pagination behavior, and storage validation rules.
+- **[docs/Agent-Orchestration-Spec.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/main/agora/docs/Agent-Orchestration-Spec.md)** -- Agent architecture specification: design principles, XML configuration format, lifecycle phases, behavior system, and the mail communication protocol.
+- **[docs/Agent-Orchestration-TODOs.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/main/agora/docs/Agent-Orchestration-TODOs.md)** -- Implementation roadmap and outstanding work items.
+- **[docs/Release.md](https://github.com/Jtonna/AGORA--Agent-Group-Orchestration-and-Runtime-Architecture/blob/main/agora/docs/Release.md)** -- Release process, versioning strategy, and npm publish workflow.
