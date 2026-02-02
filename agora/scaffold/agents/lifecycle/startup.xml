@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lifecycle phase="startup" fixed="true">
+
+  <about>
+    Agent initialization and task receipt.
+    This workflow is predefined and cannot be modified by behaviors.
+    You have already read agent.xml before entering this phase.
+  </about>
+
+  <tasks>
+    <task order="1">
+      <action>Load the mail protocol</action>
+      <do>Read mail.xml to learn how to communicate.</do>
+    </task>
+
+    <task order="2">
+      <action>Check your inbox for task assignment</action>
+      <do>Use check-inbox to find unread emails. Look for GETTING STARTED emails.</do>
+    </task>
+
+    <task order="3">
+      <action>Read and understand your task</action>
+      <do>Use read-email to get the full task details. Determine what is being asked of you.</do>
+    </task>
+
+    <task order="4">
+      <action>Acknowledge receipt</action>
+      <do>Send ACKNOWLEDGED email to your supervisor confirming you received the task.</do>
+    </task>
+
+    <task order="5">
+      <action>Clarify requirements</action>
+
+      <phase name="1-breakdown">
+        <do>
+          Break down given requirements into high-level tasks.
+          Categorize each as FEATURE (new capability) or TASK (specific work item).
+        </do>
+      </phase>
+
+      <phase name="2-clarify">
+        <decision>
+          <if condition="multiple features identified">
+            <do>
+              You will delegate. Before you can write effective task assignments,
+              clarify requirement details for each feature:
+              - Technical stack (language, framework, database)
+              - Integration points between features
+              - External service dependencies
+              - Acceptance criteria (MVP vs production-ready)
+            </do>
+            <rule>Send CLARIFICATION to supervisor. Do not proceed until answered.</rule>
+          </if>
+
+          <if condition="single task or few tasks identified">
+            <do>
+              You will implement. Determine:
+              - Integration details with existing code
+              - Technical stack and patterns to follow
+              - Dependencies and build order
+            </do>
+            <rule>If you cannot determine these from context, send CLARIFICATION.</rule>
+          </if>
+        </decision>
+      </phase>
+
+      <phase name="3-acknowledge">
+        <do>
+          After receiving clarification response, evaluate:
+          - Do you now have enough detail to proceed?
+          - Are there follow-up questions?
+        </do>
+        <decision>
+          <if condition="enough information">
+            <do>Send ACKNOWLEDGED to supervisor confirming you have what you need.</do>
+            <next>Proceed to Task 6</next>
+          </if>
+          <if condition="need more clarification">
+            <do>Send follow-up CLARIFICATION with remaining questions.</do>
+            <next>Return to polling loop</next>
+          </if>
+        </decision>
+      </phase>
+
+      <constraint>
+        Delegation passes YOUR understanding to sub-agents.
+        If you delegate with ambiguity, sub-agents inherit that ambiguity.
+        Clarify BEFORE delegating, not after.
+      </constraint>
+    </task>
+
+    <task order="6">
+      <action>Plan your approach</action>
+      <do>
+        Using your clarified breakdown from Task 5:
+        - Estimate complexity of each item
+        - Confirm: delegate or implement yourself?
+      </do>
+    </task>
+
+    <task order="7">
+      <action>Select behaviors for your task</action>
+      <do>
+        Based on your task, select which behaviors you need from the catalog you already reviewed.
+        Only select behaviors that match your task requirements.
+      </do>
+    </task>
+
+    <task order="8">
+      <action>Load your selected behaviors</action>
+      <do>Read the full behavior file for each behavior you selected. Do not load behaviors you did not select.</do>
+    </task>
+
+    <task order="9">
+      <action>Verify startup success</action>
+      <gate>
+        All previous tasks (1-8) must complete without error.
+        If ANY task failed, trigger on-error immediately.
+        Do NOT proceed to announcement.
+      </gate>
+    </task>
+
+    <task order="10">
+      <action>Announce your work</action>
+      <do>
+        Send ANNOUNCEMENT to "everyone" describing your role:
+        - If delegating: "Managing [task], covering [sub-tasks]"
+        - If implementing: "Implementing [task]"
+        Include WHERE in the system for collaboration discovery.
+      </do>
+    </task>
+  </tasks>
+
+  <on-error>
+    <examples name="fatal-errors">
+      <example>Behavior file not found at expected path</example>
+      <example>API returns error status code</example>
+      <example>Cannot parse XML file</example>
+      <example>Inbox check returns no GETTING STARTED email</example>
+      <example>Any file read operation fails</example>
+    </examples>
+    <constraint>There are NO recoverable errors in startup. ANY error is fatal.</constraint>
+    <do>
+      When ANY error occurs:
+      1. Send QUITTING email to your supervisor AND ceo
+      2. List exactly what failed (file path, error message, task number)
+      3. Exit immediately - do not proceed to runtime phase
+      4. Do not attempt workarounds or partial execution
+    </do>
+  </on-error>
+
+  <next>Enter the runtime phase with your plan and selected behaviors as they establish your runtime phase / loop instructions.</next>
+
+</lifecycle>
